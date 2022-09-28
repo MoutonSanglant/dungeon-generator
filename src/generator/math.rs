@@ -8,6 +8,7 @@ pub struct Rectangle {
     pub size: Vector<u8>,
 }
 
-pub fn overlap(a: &Rectangle, b: &Rectangle) -> bool {
+#[allow(dead_code)]
+pub fn overlap(_a: &Rectangle, _b: &Rectangle) -> bool {
     false
 }

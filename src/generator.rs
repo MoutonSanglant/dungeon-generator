@@ -1,4 +1,4 @@
-use math::{overlap, Rectangle, Vector};
+use math::{Rectangle, Vector};
 use rand::Rng;
 use std::fmt;
 
@@ -30,7 +30,7 @@ impl Dungeon {
         self.rooms.push(room);
     }
 
-    fn find_fitting_space(&self, size: &Vector<u8>) -> Vector<i32> {
+    fn find_fitting_space(&self, _size: &Vector<u8>) -> Vector<i32> {
         Vector { x: 0, y: 0 }
     }
 }

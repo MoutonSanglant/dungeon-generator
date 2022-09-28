@@ -1,7 +1,6 @@
 mod generator;
 
 use generator::{math::Vector, run};
-use std::error::Error;
 
 pub struct Config {
     pub rooms_count: usize,
@@ -32,7 +31,7 @@ impl Config {
     }
 }
 
-pub fn generate(config: Config) -> Result<(), Box<dyn Error>> {
+pub fn generate(config: Config) {
     println!(
         "Rooms: {}\nMin: {},{}\nMax: {},{}",
         config.rooms_count,
@@ -47,6 +46,4 @@ pub fn generate(config: Config) -> Result<(), Box<dyn Error>> {
         config.rooms_min_size,
         config.rooms_max_size,
     );
-
-    Ok(())
 }
