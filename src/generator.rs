@@ -1,5 +1,5 @@
-use math::{Rectangle, Vector};
-use rand::Rng;
+use math::{overlap, Rectangle, Vector};
+use rand::{seq::SliceRandom, thread_rng, Rng};
 use std::fmt;
 
 pub mod math;
@@ -63,6 +63,48 @@ struct Dungeon {
 }
 
 impl Dungeon {
+    fn find_room_position(&self, size: Vector<u8>) -> Vector<i32> {
+        let index = self.get_room_index(rand::thread_rng().gen_range(0..self.rooms.0.len()));
+
+        // TODO - Loop through rooms starting at index, until a good room as been found
+
+        loop {
+            // TODO - improvment idea: cache remaining directions in the room struct
+            let mut directions: Vec<u8> = (0..=3).collect();
+            directions.shuffle(&mut thread_rng());
+
+            for i in directions {
+                /* TODO - do overlap check
+                 * if true => check next direction
+                 * else => good position, return it
+                 */
+                println!("Try to put room next to room {} at direction {}", index, i);
+
+                // TODO - Change the position
+                let position = Vector { x: 0, y: 0 };
+                let overlap = overlap(
+                    &self.rooms.0[index].rect,
+                    &Rectangle {
+                        position: position.clone(),
+                        size: size.clone(),
+                    },
+                );
+
+                if !overlap {
+                    return position;
+                }
+            }
+
+            break;
+        }
+
+        Vector { x: 0, y: 0 }
+    }
+
+    fn get_room_index(&self, id: usize) -> usize {
+        self.rooms.0.iter().position(|r| r.id == id).unwrap()
+    }
+
     fn add_room(&mut self, room: Room) {
         self.rooms.0.push(room);
     }
@@ -78,10 +120,6 @@ impl Dungeon {
             from_index,
             to_index,
         });
-    }
-
-    fn find_room_position(&self, _size: &Vector<u8>) -> Vector<i32> {
-        Vector { x: 0, y: 0 }
     }
 }
 
@@ -110,7 +148,11 @@ pub fn run(rooms: usize, min: Vector<u8>, max: Vector<u8>) {
             x: rand::thread_rng().gen_range(dungeon.min_size.x..=dungeon.max_size.x),
             y: rand::thread_rng().gen_range(dungeon.min_size.y..=dungeon.max_size.y),
         };
-        let position = dungeon.find_room_position(&size);
+        let position = if i > 0 {
+            dungeon.find_room_position(size.clone())
+        } else {
+            Vector { x: 0, y: 0 }
+        };
         let rect = Rectangle { size, position };
 
         dungeon.add_room(Room { id: i, rect });
