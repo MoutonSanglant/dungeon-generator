@@ -2,6 +2,7 @@ mod generator;
 
 use generator::{math::Vector, run};
 
+#[repr(C)]
 pub struct Config {
     pub rooms_count: usize,
     pub rooms_min_size: Vector<u8>,
@@ -29,6 +30,34 @@ impl Config {
             rooms_max_size: max,
         })
     }
+
+    pub fn new() -> Config {
+        Config {
+            rooms_count: 0,
+            rooms_min_size: Vector { x: 0, y: 0 },
+            rooms_max_size: Vector { x: 0, y: 0 },
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn get_config() -> *mut Config {
+    Box::into_raw(Box::new(Config::new()))
+}
+
+#[no_mangle]
+pub extern "C" fn generate_ext(config: *mut Config) {
+    let cfg = unsafe { Box::<Config>::from_raw(config) };
+
+    let c = Config::build(
+        cfg.rooms_count,
+        Vec::from([cfg.rooms_min_size.x, cfg.rooms_min_size.y]),
+        Vec::from([cfg.rooms_max_size.x, cfg.rooms_max_size.y]),
+    );
+
+    generate(c.unwrap());
+
+    drop(cfg);
 }
 
 pub fn generate(config: Config) {

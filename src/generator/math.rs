@@ -1,3 +1,4 @@
+#[repr(C)]
 #[derive(Clone)]
 pub struct Vector<T> {
     pub x: T,
