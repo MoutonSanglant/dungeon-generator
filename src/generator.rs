@@ -1,7 +1,9 @@
+use map::Map;
 use math::{overlap, Rectangle, Vector};
 use rand::{seq::SliceRandom, thread_rng, Rng};
 use std::fmt;
 
+pub mod map;
 pub mod math;
 
 struct Rooms(pub Vec<Room>);
@@ -63,6 +65,10 @@ struct Dungeon {
 }
 
 impl Dungeon {
+    pub fn get_size(&self) -> (u8, u8) {
+        (5, 5)
+    }
+
     fn find_room_position(&self, size: Vector<u8>) -> Vector<i32> {
         let index = self.get_room_index(rand::thread_rng().gen_range(0..self.rooms.0.len()));
 
@@ -133,9 +139,7 @@ impl fmt::Display for Dungeon {
     }
 }
 
-pub fn run(rooms: usize, min: Vector<u8>, max: Vector<u8>) {
-    println!("Generating dungeon with {} rooms", rooms);
-
+pub fn run(rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
     let mut dungeon = Dungeon {
         rooms: Rooms(Vec::new()),
         connections: Connections(Vec::new()),
@@ -164,5 +168,5 @@ pub fn run(rooms: usize, min: Vector<u8>, max: Vector<u8>) {
         }
     }
 
-    println!("{}", dungeon);
+    Map::build(dungeon)
 }

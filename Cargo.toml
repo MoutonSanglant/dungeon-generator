@@ -8,5 +8,6 @@ authors = ["vxdcxw <defresne.thierry@gmail.com>"]
 crate-type = ["lib","staticlib"]
 
 [dependencies]
+libc = "0.2"
 clap = { version = "3.2.22", features = ["derive"] }
 rand = "0.8.5"

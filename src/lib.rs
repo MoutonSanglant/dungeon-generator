@@ -1,6 +1,16 @@
 mod generator;
 
+use generator::map::Map;
 use generator::{math::Vector, run};
+use libc::c_char;
+use std::ffi::CString;
+
+#[repr(C)]
+pub struct CMap {
+    width: u8,
+    height: u8,
+    grid: *mut c_char,
+}
 
 #[repr(C)]
 pub struct Config {
@@ -46,7 +56,7 @@ pub extern "C" fn get_config() -> *mut Config {
 }
 
 #[no_mangle]
-pub extern "C" fn generate_ext(config: *mut Config) {
+pub extern "C" fn generate_ext(config: *mut Config) -> *mut CMap {
     let cfg = unsafe { Box::<Config>::from_raw(config) };
 
     let c = Config::build(
@@ -55,12 +65,19 @@ pub extern "C" fn generate_ext(config: *mut Config) {
         Vec::from([cfg.rooms_max_size.x, cfg.rooms_max_size.y]),
     );
 
-    generate(c.unwrap());
-
     drop(cfg);
+
+    let map = generate(c.unwrap());
+    let c_str_grid = CString::new(map.to_string()).unwrap();
+
+    Box::into_raw(Box::new(CMap {
+        width: map.width,
+        height: map.height,
+        grid: c_str_grid.into_raw(),
+    }))
 }
 
-pub fn generate(config: Config) {
+pub fn generate(config: Config) -> Map {
     println!(
         "Rooms: {}\nMin: {},{}\nMax: {},{}",
         config.rooms_count,
@@ -74,5 +91,5 @@ pub fn generate(config: Config) {
         config.rooms_count,
         config.rooms_min_size,
         config.rooms_max_size,
-    );
+    )
 }
