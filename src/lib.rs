@@ -78,15 +78,6 @@ pub extern "C" fn generate_ext(config: *mut Config) -> *mut CMap {
 }
 
 pub fn generate(config: Config) -> Map {
-    println!(
-        "Rooms: {}\nMin: {},{}\nMax: {},{}",
-        config.rooms_count,
-        config.rooms_min_size.x,
-        config.rooms_min_size.y,
-        config.rooms_max_size.x,
-        config.rooms_max_size.y
-    );
-
     run(
         config.rooms_count,
         config.rooms_min_size,

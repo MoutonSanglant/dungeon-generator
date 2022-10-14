@@ -30,11 +30,3 @@ impl Map {
         vec![String::from(".".repeat(usize::from(width))); usize::from(height)]
     }
 }
-
-impl fmt::Display for Map {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.grid.iter().fold(Ok(()), |result, line| {
-            result.and_then(|_| writeln!(f, "{}", line))
-        })
-    }
-}

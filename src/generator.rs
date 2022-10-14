@@ -79,12 +79,11 @@ impl Dungeon {
             let mut directions: Vec<u8> = (0..=3).collect();
             directions.shuffle(&mut thread_rng());
 
-            for i in directions {
+            for _i in directions {
                 /* TODO - do overlap check
                  * if true => check next direction
                  * else => good position, return it
                  */
-                println!("Try to put room next to room {} at direction {}", index, i);
 
                 // TODO - Change the position
                 let position = Vector { x: 0, y: 0 };
@@ -126,16 +125,6 @@ impl Dungeon {
             from_index,
             to_index,
         });
-    }
-}
-
-impl fmt::Display for Dungeon {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Rooms:\n{}\nConnections:\n{}",
-            self.rooms, self.connections
-        )
     }
 }
 
