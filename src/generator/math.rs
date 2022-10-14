@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 #[repr(C)]
 #[derive(Clone)]
 pub struct Vector<T> {
@@ -5,8 +7,19 @@ pub struct Vector<T> {
     pub y: T,
 }
 
+impl<T: Add<Output = T>> Add for Vector<T> {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
 pub struct Rectangle {
-    pub position: Vector<i32>,
+    pub position: Vector<i8>,
     pub size: Vector<u8>,
 }
 

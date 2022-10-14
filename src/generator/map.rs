@@ -1,6 +1,3 @@
-use super::Dungeon;
-use std::fmt;
-
 pub struct Map {
     pub width: u8,
     pub height: u8,
@@ -8,14 +5,22 @@ pub struct Map {
 }
 
 impl Map {
-    pub(super) fn build(dungeon: Dungeon) -> Map {
-        let (width, height) = dungeon.get_size();
-
+    pub(super) fn build() -> Map {
         Map {
-            width,
-            height,
-            grid: Map::new_grid(width, height),
+            width: 0,
+            height: 0,
+            grid: Map::new_grid(0, 0),
         }
+    }
+
+    pub fn size(&self) -> (u8, u8) {
+        (self.width, self.height)
+    }
+
+    pub fn set_size(&mut self, width: u8, height: u8) {
+        self.width = width;
+        self.height = height;
+        self.clear();
     }
 
     pub fn to_string(&self) -> String {

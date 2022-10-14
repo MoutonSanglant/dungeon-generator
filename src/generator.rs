@@ -62,14 +62,12 @@ struct Dungeon {
     max_size: Vector<u8>,
     rooms: Rooms,
     connections: Connections,
+    map: Map,
 }
 
 impl Dungeon {
-    pub fn get_size(&self) -> (u8, u8) {
-        (5, 5)
-    }
-
-    fn find_room_position(&self, size: Vector<u8>) -> Vector<i32> {
+    // TODO - poorly named, because self is mutable, it's not a "find" method anymore
+    fn find_room_position(&mut self, size: Vector<u8>) -> Vector<i8> {
         let index = self.get_room_index(rand::thread_rng().gen_range(0..self.rooms.0.len()));
 
         // TODO - Loop through rooms starting at index, until a good room as been found
@@ -77,6 +75,7 @@ impl Dungeon {
         loop {
             // TODO - improvment idea: cache remaining directions in the room struct
             let mut directions: Vec<u8> = (0..=3).collect();
+
             directions.shuffle(&mut thread_rng());
 
             for _i in directions {
@@ -96,6 +95,14 @@ impl Dungeon {
                 );
 
                 if !overlap {
+                    let size = position.clone()
+                        + Vector {
+                            x: i8::try_from(size.x).ok().unwrap(),
+                            y: i8::try_from(size.y).ok().unwrap(),
+                        };
+
+                    self.set_map_bounds(&position, &size);
+
                     return position;
                 }
             }
@@ -104,6 +111,22 @@ impl Dungeon {
         }
 
         Vector { x: 0, y: 0 }
+    }
+
+    fn set_map_bounds(&mut self, min: &Vector<i8>, max: &Vector<i8>) {
+        let (mut w, mut h) = self.map.size();
+        let width = u8::try_from(max.x - min.x).ok().unwrap();
+        let height = u8::try_from(max.y - min.y).ok().unwrap();
+
+        if width > w {
+            w = width;
+        }
+
+        if height > h {
+            h = height;
+        }
+
+        self.map.set_size(w, h);
     }
 
     fn get_room_index(&self, id: usize) -> usize {
@@ -128,12 +151,14 @@ impl Dungeon {
     }
 }
 
+// TODO - add a seed parameter
 pub fn run(rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
     let mut dungeon = Dungeon {
         rooms: Rooms(Vec::new()),
         connections: Connections(Vec::new()),
         min_size: min,
         max_size: max,
+        map: Map::build(),
     };
 
     for i in 0..rooms {
@@ -157,5 +182,5 @@ pub fn run(rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
         }
     }
 
-    Map::build(dungeon)
+    dungeon.map
 }
