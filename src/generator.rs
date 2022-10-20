@@ -217,8 +217,7 @@ impl Dungeon {
     }
 }
 
-// TODO - add a seed parameter
-pub fn run(rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
+pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
     let mut dungeon = Dungeon {
         rooms: Rooms(Vec::new()),
         connections: Connections(Vec::new()),

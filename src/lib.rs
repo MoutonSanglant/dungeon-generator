@@ -14,13 +14,19 @@ pub struct CMap {
 
 #[repr(C)]
 pub struct Config {
+    pub seed: u64,
     pub rooms_count: usize,
     pub rooms_min_size: Vector<u8>,
     pub rooms_max_size: Vector<u8>,
 }
 
 impl Config {
-    pub fn build(rooms_count: usize, min: Vec<u8>, max: Vec<u8>) -> Result<Config, &'static str> {
+    pub fn build(
+        seed: u64,
+        rooms_count: usize,
+        min: Vec<u8>,
+        max: Vec<u8>,
+    ) -> Result<Config, &'static str> {
         let min = Vector {
             x: min[0],
             y: min[1],
@@ -35,6 +41,7 @@ impl Config {
         }
 
         Ok(Config {
+            seed,
             rooms_count,
             rooms_min_size: min,
             rooms_max_size: max,
@@ -43,6 +50,7 @@ impl Config {
 
     pub fn new() -> Config {
         Config {
+            seed: 0,
             rooms_count: 0,
             rooms_min_size: Vector { x: 0, y: 0 },
             rooms_max_size: Vector { x: 0, y: 0 },
@@ -60,6 +68,7 @@ pub extern "C" fn generate_ext(config: *mut Config) -> *mut CMap {
     let cfg = unsafe { Box::<Config>::from_raw(config) };
 
     let c = Config::build(
+        cfg.seed,
         cfg.rooms_count,
         Vec::from([cfg.rooms_min_size.x, cfg.rooms_min_size.y]),
         Vec::from([cfg.rooms_max_size.x, cfg.rooms_max_size.y]),
@@ -79,6 +88,7 @@ pub extern "C" fn generate_ext(config: *mut Config) -> *mut CMap {
 
 pub fn generate(config: Config) -> Map {
     run(
+        config.seed,
         config.rooms_count,
         config.rooms_min_size,
         config.rooms_max_size,

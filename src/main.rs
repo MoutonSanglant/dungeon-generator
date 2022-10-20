@@ -6,6 +6,8 @@ use dungeon_generator::{generate, Config};
 #[derive(Parser)]
 #[clap(version, author)]
 pub struct Args {
+    #[clap(long, default_value = "42", help = "Seed")]
+    seed: u64,
     #[clap(
         short,
         long,
@@ -35,7 +37,7 @@ pub struct Args {
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let config = Config::build(args.rooms, args.min, args.max);
+    let config = Config::build(args.seed, args.rooms, args.min, args.max);
 
     if let Err(e) = config {
         println!("Process exited with error: {}", e);
