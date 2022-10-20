@@ -1,5 +1,5 @@
 use map::Map;
-use math::{overlap, Rectangle, Vector};
+use math::{Rectangle, Vector};
 use rand::{seq::SliceRandom, thread_rng, Rng};
 use std::fmt;
 
@@ -17,8 +17,8 @@ impl fmt::Display for Room {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Room {} (pos: [{}; {}], size: [{}; {}])",
-            self.id, self.rect.position.x, self.rect.position.y, self.rect.size.x, self.rect.size.y
+            "Room {} (p1: [{}; {}], p2: [{}; {}])",
+            self.id, self.rect.p1.x, self.rect.p1.y, self.rect.p2.x, self.rect.p2.y
         )
     }
 }
@@ -62,71 +62,137 @@ struct Dungeon {
     max_size: Vector<u8>,
     rooms: Rooms,
     connections: Connections,
-    map: Map,
 }
 
 impl Dungeon {
-    // TODO - poorly named, because self is mutable, it's not a "find" method anymore
-    fn find_room_position(&mut self, size: Vector<u8>) -> Vector<i8> {
+    fn find_empty_space(&self, size: Vector<u8>) -> Rectangle {
         let index = self.get_room_index(rand::thread_rng().gen_range(0..self.rooms.0.len()));
 
-        // TODO - Loop through rooms starting at index, until a good room as been found
-
         loop {
-            // TODO - improvment idea: cache remaining directions in the room struct
+            // TODO - improvment idea: cache free directions in the room struct
             let mut directions: Vec<u8> = (0..=3).collect();
+
+            // TODO - get next index when no room found
+            let room = self.get_room_at_index(index);
 
             directions.shuffle(&mut thread_rng());
 
-            for _i in directions {
-                /* TODO - do overlap check
-                 * if true => check next direction
-                 * else => good position, return it
-                 */
+            for direction in directions {
+                let mut position = room.rect.p1.clone();
+                let p2 = room.rect.p2.clone();
 
-                // TODO - Change the position
-                let position = Vector { x: 0, y: 0 };
-                let overlap = overlap(
-                    &self.rooms.0[index].rect,
-                    &Rectangle {
-                        position: position.clone(),
-                        size: size.clone(),
-                    },
-                );
+                match direction {
+                    0 => {
+                        position = Vector {
+                            x: position.x,
+                            y: p2.y + 1,
+                        }
+                    }
+                    1 => {
+                        position = Vector {
+                            x: position.x,
+                            y: position.y - (1 + i8::try_from(size.y).ok().unwrap()),
+                        }
+                    }
+                    2 => {
+                        position = Vector {
+                            x: p2.x + 1,
+                            y: position.y,
+                        }
+                    }
+                    3 => {
+                        position = Vector {
+                            x: position.x - (1 + i8::try_from(size.x).ok().unwrap()),
+                            y: position.y,
+                        }
+                    }
+                    _ => position = Vector { x: 0, y: 0 },
+                }
 
-                if !overlap {
-                    let size = position.clone()
+                let rect = Rectangle {
+                    p1: position.clone(),
+                    p2: position.clone()
                         + Vector {
                             x: i8::try_from(size.x).ok().unwrap(),
                             y: i8::try_from(size.y).ok().unwrap(),
-                        };
+                        },
+                };
 
-                    self.set_map_bounds(&position, &size);
+                let overlap = self.overlap_any_room(&rect);
 
-                    return position;
+                if !overlap {
+                    return rect;
+                } else {
+                    println!("Overlap, try with another position");
                 }
             }
 
             break;
         }
 
-        Vector { x: 0, y: 0 }
+        Rectangle {
+            p1: Vector { x: 0, y: 0 },
+            p2: Vector { x: 0, y: 0 },
+        }
     }
 
-    fn set_map_bounds(&mut self, min: &Vector<i8>, max: &Vector<i8>) {
-        let (mut w, mut h) = self.map.size();
-        let width = u8::try_from(max.x - min.x).ok().unwrap();
-        let height = u8::try_from(max.y - min.y).ok().unwrap();
+    fn overlap_any_room(&self, rect: &Rectangle) -> bool {
+        let mut overlap = false;
 
-        if width > w {
-            w = width;
+        for room in self.rooms.0.iter() {
+            overlap = room.rect.overlap(rect);
+
+            if overlap {
+                break;
+            }
         }
 
-        if height > h {
-            h = height;
+        overlap
+    }
+
+    fn to_map(&self) -> Map {
+        let mut min = Vector { x: 0, y: 0 };
+        let mut max = Vector { x: 0, y: 0 };
+
+        for room in self.rooms.0.iter() {
+            min.x = if room.rect.p1.x < min.x {
+                room.rect.p1.x
+            } else {
+                min.x
+            };
+
+            min.y = if room.rect.p1.y < min.y {
+                room.rect.p1.y
+            } else {
+                min.y
+            };
+
+            max.x = if room.rect.p2.x > max.x {
+                room.rect.p2.x
+            } else {
+                max.x
+            };
+
+            max.y = if room.rect.p2.y > max.y {
+                room.rect.p2.y
+            } else {
+                max.y
+            };
         }
 
-        self.map.set_size(w, h);
+        let mut map = Map::build();
+
+        map.resize(&min, &max);
+
+        for room in self.rooms.0.iter() {
+            map.add_room(&room.rect);
+        }
+
+        map
+    }
+
+    fn get_room_at_index(&self, index: usize) -> &Room {
+        &self.rooms.0[index]
     }
 
     fn get_room_index(&self, id: usize) -> usize {
@@ -158,29 +224,44 @@ pub fn run(rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
         connections: Connections(Vec::new()),
         min_size: min,
         max_size: max,
-        map: Map::build(),
     };
 
-    for i in 0..rooms {
-        let size = Vector {
-            x: rand::thread_rng().gen_range(dungeon.min_size.x..=dungeon.max_size.x),
-            y: rand::thread_rng().gen_range(dungeon.min_size.y..=dungeon.max_size.y),
-        };
-        let position = if i > 0 {
-            dungeon.find_room_position(size.clone())
-        } else {
-            Vector { x: 0, y: 0 }
-        };
-        let rect = Rectangle { size, position };
-
-        dungeon.add_room(Room { id: i, rect });
-
-        if i > 0 {
-            for _j in 0..rand::thread_rng().gen_range(1..4) {
-                dungeon.connect_rooms(i, rand::thread_rng().gen_range(0..i));
-            }
-        }
+    if dungeon.max_size.x > 127 || dungeon.max_size.y > 127 {
+        panic!("Room size must be between 0 and 127 (inclusive)")
     }
 
-    dungeon.map
+    add_room(&mut dungeon, 0, true);
+
+    for i in 1..rooms {
+        add_room(&mut dungeon, i, false);
+
+        /*
+        for _j in 0..rand::thread_rng().gen_range(1..4) {
+            dungeon.connect_rooms(i, rand::thread_rng().gen_range(0..i));
+        }
+        */
+    }
+
+    dungeon.to_map()
+}
+
+fn add_room(dungeon: &mut Dungeon, id: usize, is_first: bool) {
+    let size = Vector {
+        x: rand::thread_rng().gen_range(dungeon.min_size.x..=dungeon.max_size.x),
+        y: rand::thread_rng().gen_range(dungeon.min_size.y..=dungeon.max_size.y),
+    };
+
+    let rect = if is_first {
+        Rectangle {
+            p1: Vector { x: 0, y: 0 },
+            p2: Vector {
+                x: i8::try_from(size.x).ok().unwrap(),
+                y: i8::try_from(size.y).ok().unwrap(),
+            },
+        }
+    } else {
+        dungeon.find_empty_space(size.clone())
+    };
+
+    dungeon.add_room(Room { id, rect });
 }

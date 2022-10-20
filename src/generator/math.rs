@@ -1,7 +1,8 @@
+use std::cmp;
 use std::ops::Add;
 
 #[repr(C)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Vector<T> {
     pub x: T,
     pub y: T,
@@ -18,12 +19,17 @@ impl<T: Add<Output = T>> Add for Vector<T> {
     }
 }
 
+#[derive(Debug)]
 pub struct Rectangle {
-    pub position: Vector<i8>,
-    pub size: Vector<u8>,
+    pub p1: Vector<i8>,
+    pub p2: Vector<i8>,
 }
 
-#[allow(dead_code)]
-pub fn overlap(_a: &Rectangle, _b: &Rectangle) -> bool {
-    false
+impl Rectangle {
+    pub fn overlap(&self, other: &Rectangle) -> bool {
+        let width_check = cmp::min(self.p2.x, other.p2.x) > cmp::max(self.p1.x, other.p1.x);
+        let height_check = cmp::min(self.p2.y, other.p2.y) > cmp::max(self.p1.y, other.p1.y);
+
+        width_check && height_check
+    }
 }
