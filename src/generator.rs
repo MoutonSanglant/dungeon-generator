@@ -1,6 +1,7 @@
 use map::Map;
 use math::{Rectangle, Vector};
-use rand::{seq::SliceRandom, thread_rng, Rng};
+use rand::{seq::SliceRandom, Rng, SeedableRng};
+use rand_chacha::ChaCha8Rng;
 use std::fmt;
 
 pub mod map;
@@ -62,11 +63,14 @@ struct Dungeon {
     max_size: Vector<u8>,
     rooms: Rooms,
     connections: Connections,
+    rng: ChaCha8Rng,
 }
 
 impl Dungeon {
     fn find_empty_space(&self, size: Vector<u8>) -> Rectangle {
-        let index = self.get_room_index(rand::thread_rng().gen_range(0..self.rooms.0.len()));
+        let mut rng = self.rng.clone();
+        let room_id = rng.gen_range(0..self.rooms.0.len());
+        let index = self.get_room_index(room_id);
 
         loop {
             // TODO - improvment idea: cache free directions in the room struct
@@ -75,7 +79,7 @@ impl Dungeon {
             // TODO - get next index when no room found
             let room = self.get_room_at_index(index);
 
-            directions.shuffle(&mut thread_rng());
+            directions.shuffle(&mut rng);
 
             for direction in directions {
                 let mut position = room.rect.p1.clone();
@@ -223,6 +227,7 @@ pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
         connections: Connections(Vec::new()),
         min_size: min,
         max_size: max,
+        rng: ChaCha8Rng::seed_from_u64(seed),
     };
 
     if dungeon.max_size.x > 127 || dungeon.max_size.y > 127 {
@@ -246,8 +251,12 @@ pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
 
 fn add_room(dungeon: &mut Dungeon, id: usize, is_first: bool) {
     let size = Vector {
-        x: rand::thread_rng().gen_range(dungeon.min_size.x..=dungeon.max_size.x),
-        y: rand::thread_rng().gen_range(dungeon.min_size.y..=dungeon.max_size.y),
+        x: dungeon
+            .rng
+            .gen_range(dungeon.min_size.x..=dungeon.max_size.x),
+        y: dungeon
+            .rng
+            .gen_range(dungeon.min_size.y..=dungeon.max_size.y),
     };
 
     let rect = if is_first {
