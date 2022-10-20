@@ -11,3 +11,4 @@ crate-type = ["lib","staticlib"]
 libc = "0.2"
 clap = { version = "3.2.22", features = ["derive"] }
 rand = "0.8.5"
+rand_chacha = "0.3.1"
