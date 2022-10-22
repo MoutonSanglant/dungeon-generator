@@ -67,7 +67,7 @@ struct Dungeon {
 }
 
 impl Dungeon {
-    fn find_empty_space(&self, size: Vector<u8>) -> Rectangle {
+    fn find_empty_space(&self, size: Vector<i8>) -> Rectangle {
         let mut rng = self.rng.clone();
         let room_id = rng.gen_range(0..self.rooms.0.len());
         let index = self.get_room_index(room_id);
@@ -95,7 +95,7 @@ impl Dungeon {
                     1 => {
                         position = Vector {
                             x: position.x,
-                            y: position.y - (1 + i8::try_from(size.y).ok().unwrap()),
+                            y: position.y - (1 + size.y),
                         }
                     }
                     2 => {
@@ -106,7 +106,7 @@ impl Dungeon {
                     }
                     3 => {
                         position = Vector {
-                            x: position.x - (1 + i8::try_from(size.x).ok().unwrap()),
+                            x: position.x - (1 + size.x),
                             y: position.y,
                         }
                     }
@@ -117,8 +117,8 @@ impl Dungeon {
                     p1: position.clone(),
                     p2: position.clone()
                         + Vector {
-                            x: i8::try_from(size.x).ok().unwrap(),
-                            y: i8::try_from(size.y).ok().unwrap(),
+                            x: size.x,
+                            y: size.y,
                         },
                 };
 
@@ -231,7 +231,7 @@ pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
     };
 
     if dungeon.max_size.x > 127 || dungeon.max_size.y > 127 {
-        panic!("Room size must be between 0 and 127 (inclusive)")
+        panic!("Room size must be in the range [0,128)")
     }
 
     for i in 0..rooms {
@@ -248,25 +248,25 @@ pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
 }
 
 fn add_room(dungeon: &mut Dungeon, id: usize) {
-    let size = Vector {
+    let signed_size = Vector {
         x: dungeon
             .rng
-            .gen_range(dungeon.min_size.x..=dungeon.max_size.x),
+            .gen_range(dungeon.min_size.x..=dungeon.max_size.x) as i8,
         y: dungeon
             .rng
-            .gen_range(dungeon.min_size.y..=dungeon.max_size.y),
+            .gen_range(dungeon.min_size.y..=dungeon.max_size.y) as i8,
     };
 
     let rect = if id == 0 {
         Rectangle {
             p1: Vector { x: 0, y: 0 },
             p2: Vector {
-                x: i8::try_from(size.x).ok().unwrap(),
-                y: i8::try_from(size.y).ok().unwrap(),
+                x: signed_size.x,
+                y: signed_size.y,
             },
         }
     } else {
-        dungeon.find_empty_space(size.clone())
+        dungeon.find_empty_space(signed_size.clone())
     };
 
     dungeon.add_room(Room { id, rect });
