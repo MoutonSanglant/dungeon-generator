@@ -234,10 +234,8 @@ pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
         panic!("Room size must be between 0 and 127 (inclusive)")
     }
 
-    add_room(&mut dungeon, 0, true);
-
-    for i in 1..rooms {
-        add_room(&mut dungeon, i, false);
+    for i in 0..rooms {
+        add_room(&mut dungeon, i);
 
         /*
         for _j in 0..rand::thread_rng().gen_range(1..4) {
@@ -249,7 +247,7 @@ pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
     dungeon.to_map()
 }
 
-fn add_room(dungeon: &mut Dungeon, id: usize, is_first: bool) {
+fn add_room(dungeon: &mut Dungeon, id: usize) {
     let size = Vector {
         x: dungeon
             .rng
@@ -259,7 +257,7 @@ fn add_room(dungeon: &mut Dungeon, id: usize, is_first: bool) {
             .gen_range(dungeon.min_size.y..=dungeon.max_size.y),
     };
 
-    let rect = if is_first {
+    let rect = if id == 0 {
         Rectangle {
             p1: Vector { x: 0, y: 0 },
             p2: Vector {
