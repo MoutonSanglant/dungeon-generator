@@ -1,9 +1,11 @@
+use errors::PlacementError;
 use map::Map;
 use math::{Rectangle, Vector};
 use rand::{seq::SliceRandom, Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use std::fmt;
 
+pub mod errors;
 pub mod map;
 pub mod math;
 
@@ -67,16 +69,15 @@ struct Dungeon {
 }
 
 impl Dungeon {
-    fn find_empty_space(&self, size: Vector<i8>) -> Rectangle {
+    fn find_empty_space(&self, size: Vector<i8>) -> Result<Rectangle, PlacementError> {
         let mut rng = self.rng.clone();
         let room_id = rng.gen_range(0..self.rooms.0.len());
-        let index = self.get_room_index(room_id);
+        let start_index = self.get_room_index(room_id);
+        let limit = self.rooms.0.len() - 1;
+        let mut index = start_index.clone();
 
         loop {
-            // TODO - improvment idea: cache free directions in the room struct
             let mut directions: Vec<u8> = (0..=3).collect();
-
-            // TODO - get next index when no room found
             let room = self.get_room_at_index(index);
 
             directions.shuffle(&mut rng);
@@ -125,19 +126,22 @@ impl Dungeon {
                 let overlap = self.overlap_any_room(&rect);
 
                 if !overlap {
-                    return rect;
-                } else {
-                    println!("Overlap, try with another position");
+                    return Ok(rect);
                 }
             }
 
-            break;
+            index += 1;
+
+            if index >= limit {
+                index = 0;
+            }
+
+            if index == start_index {
+                break;
+            }
         }
 
-        Rectangle {
-            p1: Vector { x: 0, y: 0 },
-            p2: Vector { x: 0, y: 0 },
-        }
+        Err(PlacementError::new("Cannot find a valid position"))
     }
 
     fn overlap_any_room(&self, rect: &Rectangle) -> bool {
@@ -266,7 +270,14 @@ fn add_room(dungeon: &mut Dungeon, id: usize) {
             },
         }
     } else {
-        dungeon.find_empty_space(signed_size.clone())
+        match dungeon.find_empty_space(signed_size.clone()) {
+            Ok(rect) => rect,
+            Err(_error) => Rectangle {
+                p1: Vector { x: 0, y: 0 },
+                p2: Vector { x: 0, y: 0 },
+            }, // We don't care, the room will be discarded
+               //Err(error) => panic!("Cannot construct dungeon: {:?}", error),
+        }
     };
 
     dungeon.add_room(Room { id, rect });
