@@ -14,6 +14,22 @@ struct Rooms(pub Vec<Room>);
 struct Room {
     id: usize,
     rect: Rectangle,
+    connections: Vec<usize>,
+}
+
+impl Room {
+    fn connect_to(&mut self, room_id: usize) {
+        if self.connections.contains(&room_id) {
+            return;
+        }
+
+        // TODO
+        // - add waypoints
+        // - store wall index (North, South, East, West), use enum
+        // - write (in grid)
+
+        self.connections.push(room_id);
+    }
 }
 
 impl fmt::Display for Room {
@@ -34,49 +50,21 @@ impl fmt::Display for Rooms {
     }
 }
 
-struct Connections(pub Vec<Connection>);
-
-#[derive(PartialEq)]
-struct Connection {
-    from_index: usize,
-    to_index: usize,
-}
-
-impl fmt::Display for Connection {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Room {} is connected with room {}",
-            self.from_index, self.to_index
-        )
-    }
-}
-
-impl fmt::Display for Connections {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.iter().fold(Ok(()), |result, connection| {
-            result.and_then(|_| writeln!(f, "{}", connection))
-        })
-    }
-}
-
 struct Dungeon {
     min_size: Vector<u8>,
     max_size: Vector<u8>,
     rooms: Rooms,
-    connections: Connections,
     rng: ChaCha8Rng,
 }
 
 impl Dungeon {
     fn find_empty_space(&self, size: Vector<i8>) -> Result<Rectangle, PlacementError> {
         let mut rng = self.rng.clone();
-        let room_id = rng.gen_range(0..self.rooms.0.len());
-        let start_index = self.get_room_index(room_id);
-        let limit = self.rooms.0.len() - 1;
-        let mut index = start_index.clone();
+        let mut indices: Vec<usize> = (0..self.rooms.0.len()).collect();
 
-        loop {
+        indices.shuffle(&mut rng);
+
+        for index in indices {
             let mut directions: Vec<u8> = (0..=3).collect();
             let room = self.get_room_at_index(index);
 
@@ -128,16 +116,6 @@ impl Dungeon {
                 if !overlap {
                     return Ok(rect);
                 }
-            }
-
-            index += 1;
-
-            if index >= limit {
-                index = 0;
-            }
-
-            if index == start_index {
-                break;
             }
         }
 
@@ -203,32 +181,18 @@ impl Dungeon {
         &self.rooms.0[index]
     }
 
-    fn get_room_index(&self, id: usize) -> usize {
-        self.rooms.0.iter().position(|r| r.id == id).unwrap()
+    fn get_room_at_index_mut(&mut self, index: usize) -> &mut Room {
+        &mut self.rooms.0[index]
     }
 
     fn add_room(&mut self, room: Room) {
         self.rooms.0.push(room);
-    }
-
-    fn connect_rooms(&mut self, from_index: usize, to_index: usize) {
-        if self.connections.0.contains(&Connection {
-            from_index,
-            to_index,
-        }) {
-            return;
-        }
-        self.connections.0.push(Connection {
-            from_index,
-            to_index,
-        });
     }
 }
 
 pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
     let mut dungeon = Dungeon {
         rooms: Rooms(Vec::new()),
-        connections: Connections(Vec::new()),
         min_size: min,
         max_size: max,
         rng: ChaCha8Rng::seed_from_u64(seed),
@@ -241,11 +205,16 @@ pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
     for i in 0..rooms {
         add_room(&mut dungeon, i);
 
-        /*
-        for _j in 0..rand::thread_rng().gen_range(1..4) {
-            dungeon.connect_rooms(i, rand::thread_rng().gen_range(0..i));
+        if i < 1 {
+            continue;
         }
-        */
+
+        for _j in 0..dungeon.rng.gen_range(1..=4) {
+            let other_id = dungeon.rng.gen_range(0..i);
+            let room = dungeon.get_room_at_index_mut(i);
+
+            room.connect_to(other_id);
+        }
     }
 
     dungeon.to_map()
@@ -280,5 +249,9 @@ fn add_room(dungeon: &mut Dungeon, id: usize) {
         }
     };
 
-    dungeon.add_room(Room { id, rect });
+    dungeon.add_room(Room {
+        id,
+        rect,
+        connections: Vec::new(),
+    });
 }
