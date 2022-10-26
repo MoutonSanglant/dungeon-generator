@@ -9,8 +9,6 @@ pub mod errors;
 pub mod map;
 pub mod math;
 
-struct Rooms(pub Vec<Room>);
-
 struct Room {
     id: usize,
     rect: Rectangle,
@@ -42,25 +40,17 @@ impl fmt::Display for Room {
     }
 }
 
-impl fmt::Display for Rooms {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.iter().fold(Ok(()), |result, room| {
-            result.and_then(|_| writeln!(f, "{}", room))
-        })
-    }
-}
-
 struct Dungeon {
     min_size: Vector<u8>,
     max_size: Vector<u8>,
-    rooms: Rooms,
+    rooms: Vec<Room>,
     rng: ChaCha8Rng,
 }
 
 impl Dungeon {
     fn find_empty_space(&self, size: Vector<i8>) -> Result<Rectangle, PlacementError> {
         let mut rng = self.rng.clone();
-        let mut indices: Vec<usize> = (0..self.rooms.0.len()).collect();
+        let mut indices: Vec<usize> = (0..self.rooms.len()).collect();
 
         indices.shuffle(&mut rng);
 
@@ -125,7 +115,7 @@ impl Dungeon {
     fn overlap_any_room(&self, rect: &Rectangle) -> bool {
         let mut overlap = false;
 
-        for room in self.rooms.0.iter() {
+        for room in self.rooms.iter() {
             overlap = room.rect.overlap(rect);
 
             if overlap {
@@ -140,7 +130,7 @@ impl Dungeon {
         let mut min = Vector { x: 0, y: 0 };
         let mut max = Vector { x: 0, y: 0 };
 
-        for room in self.rooms.0.iter() {
+        for room in self.rooms.iter() {
             min.x = if room.rect.p1.x < min.x {
                 room.rect.p1.x
             } else {
@@ -170,7 +160,7 @@ impl Dungeon {
 
         map.resize(&min, &max);
 
-        for room in self.rooms.0.iter() {
+        for room in self.rooms.iter() {
             map.add_room(&room.rect);
         }
 
@@ -178,21 +168,21 @@ impl Dungeon {
     }
 
     fn get_room_at_index(&self, index: usize) -> &Room {
-        &self.rooms.0[index]
+        &self.rooms[index]
     }
 
     fn get_room_at_index_mut(&mut self, index: usize) -> &mut Room {
-        &mut self.rooms.0[index]
+        &mut self.rooms[index]
     }
 
     fn add_room(&mut self, room: Room) {
-        self.rooms.0.push(room);
+        self.rooms.push(room);
     }
 }
 
 pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
     let mut dungeon = Dungeon {
-        rooms: Rooms(Vec::new()),
+        rooms: Vec::new(),
         min_size: min,
         max_size: max,
         rng: ChaCha8Rng::seed_from_u64(seed),
