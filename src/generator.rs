@@ -61,7 +61,7 @@ fn add_room(dungeon: &mut Dungeon, id: usize) {
             },
         }
     } else {
-        match dungeon.find_empty_space(signed_size.clone()) {
+        match dungeon.find_empty_space(signed_size) {
             Ok(rect) => rect,
             Err(_error) => Rectangle {
                 p1: Vector { x: 0, y: 0 },

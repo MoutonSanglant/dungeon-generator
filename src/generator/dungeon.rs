@@ -27,7 +27,7 @@ impl Dungeon {
         indices.shuffle(&mut rng);
 
         for index in indices {
-            let room = self.get_room_at_index(index);
+            let room = &self.rooms[index];
             let mut directions: Vec<Direction> = vec![
                 Direction::North,
                 Direction::South,
@@ -38,54 +38,36 @@ impl Dungeon {
             directions.shuffle(&mut rng);
 
             for direction in directions {
-                let mut position = room.rect.p1.clone();
-                let p2 = room.rect.p2.clone();
+                let rect = self.get_rectangle(room.rect.clone(), size.clone(), direction);
 
-                match direction {
-                    Direction::North => {
-                        position = Vector {
-                            x: position.x,
-                            y: p2.y + 1,
-                        }
-                    }
-                    Direction::South => {
-                        position = Vector {
-                            x: position.x,
-                            y: position.y - (1 + size.y),
-                        }
-                    }
-                    Direction::East => {
-                        position = Vector {
-                            x: p2.x + 1,
-                            y: position.y,
-                        }
-                    }
-                    Direction::West => {
-                        position = Vector {
-                            x: position.x - (1 + size.x),
-                            y: position.y,
-                        }
-                    }
-                }
-
-                let rect = Rectangle {
-                    p1: position.clone(),
-                    p2: position.clone()
-                        + Vector {
-                            x: size.x,
-                            y: size.y,
-                        },
-                };
-
-                let overlap = self.overlap_any_room(&rect);
-
-                if !overlap {
+                if !self.overlap_test(&rect) {
                     return Ok(rect);
                 }
             }
         }
 
         Err(PlacementError::new("Cannot find a valid position"))
+    }
+
+    fn get_rectangle(&self, rect: Rectangle, size: Vector<i8>, direction: Direction) -> Rectangle {
+        let mut position = rect.p1;
+        let p2 = rect.p2;
+
+        match direction {
+            Direction::North => position.y = p2.y + 1,
+            Direction::East  => position.x = p2.x + 1,
+            Direction::South => position.y = position.y - (1 + size.y),
+            Direction::West  => position.x = position.x - (1 + size.x),
+        }
+
+        Rectangle {
+            p1: position.clone(),
+            p2: position.clone()
+                + Vector {
+                    x: size.x,
+                    y: size.y,
+                },
+        }
     }
 
     pub fn to_map(&self) -> Map {
@@ -137,15 +119,11 @@ impl Dungeon {
         self.rooms.push(room);
     }
 
-    fn get_room_at_index(&self, index: usize) -> &Room {
-        &self.rooms[index]
-    }
-
-    fn overlap_any_room(&self, rect: &Rectangle) -> bool {
+    fn overlap_test(&self, rect: &Rectangle) -> bool {
         let mut overlap = false;
 
         for room in self.rooms.iter() {
-            overlap = room.rect.overlap(rect);
+            overlap = room.rect.overlap(&rect);
 
             if overlap {
                 break;

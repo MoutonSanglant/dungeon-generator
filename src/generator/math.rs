@@ -19,7 +19,7 @@ impl<T: Add<Output = T>> Add for Vector<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone)]
 pub struct Rectangle {
     pub p1: Vector<i8>,
     pub p2: Vector<i8>,
