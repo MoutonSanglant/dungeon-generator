@@ -12,6 +12,13 @@ pub struct Dungeon {
     pub rng: ChaCha8Rng,
 }
 
+enum Direction {
+    North,
+    South,
+    East,
+    West,
+}
+
 impl Dungeon {
     pub fn find_empty_space(&self, size: Vector<i8>) -> Result<Rectangle, PlacementError> {
         let mut rng = self.rng.clone();
@@ -20,8 +27,13 @@ impl Dungeon {
         indices.shuffle(&mut rng);
 
         for index in indices {
-            let mut directions: Vec<u8> = (0..=3).collect();
             let room = self.get_room_at_index(index);
+            let mut directions: Vec<Direction> = vec![
+                Direction::North,
+                Direction::South,
+                Direction::East,
+                Direction::West,
+            ];
 
             directions.shuffle(&mut rng);
 
@@ -30,31 +42,30 @@ impl Dungeon {
                 let p2 = room.rect.p2.clone();
 
                 match direction {
-                    0 => {
+                    Direction::North => {
                         position = Vector {
                             x: position.x,
                             y: p2.y + 1,
                         }
                     }
-                    1 => {
+                    Direction::South => {
                         position = Vector {
                             x: position.x,
                             y: position.y - (1 + size.y),
                         }
                     }
-                    2 => {
+                    Direction::East => {
                         position = Vector {
                             x: p2.x + 1,
                             y: position.y,
                         }
                     }
-                    3 => {
+                    Direction::West => {
                         position = Vector {
                             x: position.x - (1 + size.x),
                             y: position.y,
                         }
                     }
-                    _ => position = Vector { x: 0, y: 0 },
                 }
 
                 let rect = Rectangle {
