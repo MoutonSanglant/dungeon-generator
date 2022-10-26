@@ -3,7 +3,6 @@ use map::Map;
 use math::{Rectangle, Vector};
 use rand::{seq::SliceRandom, Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
-use std::fmt;
 
 pub mod errors;
 pub mod map;
@@ -27,16 +26,6 @@ impl Room {
         // - write (in grid)
 
         self.connections.push(room_id);
-    }
-}
-
-impl fmt::Display for Room {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Room {} (p1: [{}; {}], p2: [{}; {}])",
-            self.id, self.rect.p1.x, self.rect.p1.y, self.rect.p2.x, self.rect.p2.y
-        )
     }
 }
 
