@@ -60,8 +60,11 @@ struct Dungeon {
 impl Dungeon {
     fn find_empty_space(&self, size: Vector<i8>) -> Result<Rectangle, PlacementError> {
         let mut rng = self.rng.clone();
+        let mut indices: Vec<usize> = (0..self.rooms.0.len()).collect();
 
-        for index in (0..self.rooms.0.len()).collect().shuffle(&mut rng) {
+        indices.shuffle(&mut rng);
+
+        for index in indices {
             let mut directions: Vec<u8> = (0..=3).collect();
             let room = self.get_room_at_index(index);
 
