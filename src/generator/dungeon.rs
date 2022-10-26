@@ -88,20 +88,6 @@ impl Dungeon {
         Err(PlacementError::new("Cannot find a valid position"))
     }
 
-    fn overlap_any_room(&self, rect: &Rectangle) -> bool {
-        let mut overlap = false;
-
-        for room in self.rooms.iter() {
-            overlap = room.rect.overlap(rect);
-
-            if overlap {
-                break;
-            }
-        }
-
-        overlap
-    }
-
     pub fn to_map(&self) -> Map {
         let mut min = Vector { x: 0, y: 0 };
         let mut max = Vector { x: 0, y: 0 };
@@ -143,15 +129,29 @@ impl Dungeon {
         map
     }
 
-    fn get_room_at_index(&self, index: usize) -> &Room {
-        &self.rooms[index]
-    }
-
     pub fn get_room_at_index_mut(&mut self, index: usize) -> &mut Room {
         &mut self.rooms[index]
     }
 
     pub fn add_room(&mut self, room: Room) {
         self.rooms.push(room);
+    }
+
+    fn get_room_at_index(&self, index: usize) -> &Room {
+        &self.rooms[index]
+    }
+
+    fn overlap_any_room(&self, rect: &Rectangle) -> bool {
+        let mut overlap = false;
+
+        for room in self.rooms.iter() {
+            overlap = room.rect.overlap(rect);
+
+            if overlap {
+                break;
+            }
+        }
+
+        overlap
     }
 }
