@@ -111,8 +111,17 @@ impl Dungeon {
         map
     }
 
-    pub fn get_room_at_index_mut(&mut self, index: usize) -> &mut Room {
-        &mut self.rooms[index]
+    pub fn connect_rooms(&mut self, first: usize, second: usize) -> bool  {
+        if self.rooms[first].connections.contains(&second) ||
+            self.rooms[second].connections.contains(&first)
+        {
+            return false;
+        }
+
+        self.rooms[first].connect_to(second);
+        self.rooms[second].connect_to(first);
+
+        true
     }
 
     pub fn add_room(&mut self, room: Room) {

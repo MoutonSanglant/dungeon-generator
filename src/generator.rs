@@ -31,11 +31,12 @@ pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
             continue;
         }
 
-        for _j in 0..dungeon.rng.gen_range(1..=4) {
-            let other_id = dungeon.rng.gen_range(0..i);
-            let room = dungeon.get_room_at_index_mut(i);
+        let mut rng = dungeon.rng.clone();
+        let connections = rng.gen_range(1..=i.min(4));
+        let other_ids = (0..connections).map(|_| rng.gen_range(0..i));
 
-            room.connect_to(other_id);
+        for other_id in other_ids {
+            dungeon.connect_rooms(i, other_id);
         }
     }
 

@@ -7,9 +7,9 @@ pub struct Room {
 }
 
 impl Room {
-    pub fn connect_to(&mut self, room_id: usize) {
-        if self.connections.contains(&room_id) {
-            return;
+    pub fn connect_to(&mut self, room_id: usize) -> bool {
+        if self.connections.len() >= 4 || self.connections.contains(&room_id) {
+            return false;
         }
 
         // TODO
@@ -18,5 +18,7 @@ impl Room {
         // - write (in grid)
 
         self.connections.push(room_id);
+
+        true
     }
 }
