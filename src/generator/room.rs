@@ -1,28 +1,20 @@
 use super::math::Rectangle;
+use super::connection::Connection;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 pub struct Room {
     pub id: usize,
     pub rect: Rectangle,
-    pub connections: Vec<usize>,
+    pub connections: Vec<Connection>,
 }
 
 impl Room {
-    pub fn can_connect_to(&self, room_id: usize) -> bool {
-        self.connections.len() >= 4 || self.connections.contains(&room_id)
+    pub fn is_connected_to(&self, room: &Rc<RefCell<Room>>) -> bool {
+        self.connections.iter().any(|c| c.has_destination(room))
     }
 
-    pub fn connect_to(&mut self, room_id: usize) -> bool {
-        if !self.can_connect_to(room_id) {
-            return false;
-        }
-
-        // TODO
-        // - add waypoints
-        // - store wall index (North, South, East, West), use enum
-        // - write (in grid)
-
-        self.connections.push(room_id);
-
-        true
+    pub fn add_connection(&mut self, room: &Rc<RefCell<Room>>) {
+        self.connections.push(Connection::new(&Rc::downgrade(room)));
     }
 }

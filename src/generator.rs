@@ -4,6 +4,7 @@ pub mod math;
 mod dungeon;
 mod errors;
 mod room;
+mod connection;
 
 use dungeon::Dungeon;
 use map::Map;

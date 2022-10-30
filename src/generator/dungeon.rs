@@ -4,11 +4,13 @@ use super::math::{Rectangle, Vector};
 use super::room::Room;
 use rand::seq::SliceRandom;
 use rand_chacha::ChaCha8Rng;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 pub struct Dungeon {
     pub min_size: Vector<u8>,
     pub max_size: Vector<u8>,
-    pub rooms: Vec<Room>,
+    pub rooms: Vec<Rc<RefCell<Room>>>,
     pub rng: ChaCha8Rng,
 }
 
@@ -27,7 +29,7 @@ impl Dungeon {
         indices.shuffle(&mut rng);
 
         for index in indices {
-            let room = &self.rooms[index];
+            let room = self.rooms[index].borrow();
             let mut directions: Vec<Direction> = vec![
                 Direction::North,
                 Direction::South,
@@ -74,7 +76,8 @@ impl Dungeon {
         let mut min = Vector { x: 0, y: 0 };
         let mut max = Vector { x: 0, y: 0 };
 
-        for room in self.rooms.iter() {
+        for r in self.rooms.iter() {
+            let room = r.borrow_mut();
             min.x = if room.rect.p1.x < min.x {
                 room.rect.p1.x
             } else {
@@ -104,34 +107,38 @@ impl Dungeon {
 
         map.resize(&min, &max);
 
-        for room in self.rooms.iter() {
+        for r in self.rooms.iter() {
+            let room = r.borrow_mut();
             map.add_room(&room.rect);
         }
 
         map
     }
 
-    pub fn connect_rooms(&mut self, first: usize, second: usize) -> bool  {
-        if !self.rooms[first].can_connect_to(second) ||
-            !self.rooms[second].can_connect_to(first)
-        {
-            return false;
+    pub fn connect_rooms(&mut self, first: usize, second: usize) -> bool {
+        let mut first_room = self.rooms[first].borrow_mut();
+        let mut second_room = self.rooms[second].borrow_mut();
+
+        if first_room.is_connected_to(&self.rooms[second])
+            || second_room.is_connected_to(&self.rooms[first]) {
+                return false;
         }
 
-        self.rooms[first].connect_to(second);
-        self.rooms[second].connect_to(first);
+        first_room.add_connection(&self.rooms[second]);
+        second_room.add_connection(&self.rooms[first]);
 
         true
     }
 
     pub fn add_room(&mut self, room: Room) {
-        self.rooms.push(room);
+        self.rooms.push(Rc::new(RefCell::new(room)));
     }
 
     fn overlap_test(&self, rect: &Rectangle) -> bool {
         let mut overlap = false;
 
-        for room in self.rooms.iter() {
+        for r in self.rooms.iter() {
+            let room = r.borrow();
             overlap = room.rect.overlap(&rect);
 
             if overlap {
