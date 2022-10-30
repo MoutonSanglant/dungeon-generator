@@ -112,8 +112,8 @@ impl Dungeon {
     }
 
     pub fn connect_rooms(&mut self, first: usize, second: usize) -> bool  {
-        if self.rooms[first].connections.contains(&second) ||
-            self.rooms[second].connections.contains(&first)
+        if !self.rooms[first].can_connect_to(second) ||
+            !self.rooms[second].can_connect_to(first)
         {
             return false;
         }

@@ -7,8 +7,12 @@ pub struct Room {
 }
 
 impl Room {
+    pub fn can_connect_to(&self, room_id: usize) -> bool {
+        self.connections.len() >= 4 || self.connections.contains(&room_id)
+    }
+
     pub fn connect_to(&mut self, room_id: usize) -> bool {
-        if self.connections.len() >= 4 || self.connections.contains(&room_id) {
+        if !self.can_connect_to(room_id) {
             return false;
         }
 
