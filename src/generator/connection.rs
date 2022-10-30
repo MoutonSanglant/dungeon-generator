@@ -3,17 +3,19 @@ use std::rc::{Weak, Rc};
 use std::cell::RefCell;
 
 pub struct Connection {
-    destination: Weak<RefCell<Room>>,
+    from: Weak<RefCell<Room>>,
+    to: Weak<RefCell<Room>>,
 }
 
 impl Connection {
-    pub fn new(room: &Weak<RefCell<Room>>) -> Connection {
+    pub fn new(start: &Weak<RefCell<Room>>, room: &Weak<RefCell<Room>>) -> Connection {
         Connection {
-            destination: Weak::clone(room),
+            from: Weak::clone(start),
+            to: Weak::clone(room),
         }
     }
 
     pub fn has_destination(&self, room: &Rc<RefCell<Room>>) -> bool {
-        Rc::ptr_eq(&self.destination.upgrade().unwrap(), room)
+        Rc::ptr_eq(&self.to.upgrade().unwrap(), room)
     }
 }

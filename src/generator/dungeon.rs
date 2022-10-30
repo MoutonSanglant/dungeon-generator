@@ -116,18 +116,7 @@ impl Dungeon {
     }
 
     pub fn connect_rooms(&mut self, first: usize, second: usize) -> bool {
-        let mut first_room = self.rooms[first].borrow_mut();
-        let mut second_room = self.rooms[second].borrow_mut();
-
-        if first_room.is_connected_to(&self.rooms[second])
-            || second_room.is_connected_to(&self.rooms[first]) {
-                return false;
-        }
-
-        first_room.add_connection(&self.rooms[second]);
-        second_room.add_connection(&self.rooms[first]);
-
-        true
+        Room::connect(&self.rooms[first], &self.rooms[second])
     }
 
     pub fn add_room(&mut self, room: Room) {
