@@ -32,4 +32,11 @@ impl Rectangle {
 
         width_check && height_check
     }
+
+    pub fn size(&self) -> Vector<u8> {
+        Vector {
+            x: u8::try_from(self.p2.x - self.p1.x).ok().unwrap(),
+            y: u8::try_from(self.p2.y - self.p1.y).ok().unwrap(),
+        }
+    }
 }

@@ -56,10 +56,17 @@ impl Map {
         for y in rect.p1.y..rect.p2.y {
             let p1_x = usize::try_from(rect.p1.x + self.offset.x).ok().unwrap();
             let p2_x = usize::try_from(rect.p2.x + self.offset.x).ok().unwrap();
+            let y = usize::try_from(y + self.offset.y).ok().unwrap();
 
-            self.grid[usize::try_from(y + self.offset.y).ok().unwrap()]
-                .replace_range(p1_x..p2_x, &"x".repeat(p2_x - p1_x));
+            self.grid[y].replace_range(p1_x..p2_x, &"x".repeat(p2_x - p1_x));
         }
+    }
+
+    pub fn add_door(&mut self, position: &Vector<i8>){
+        let x = usize::try_from(position.x + self.offset.x).ok().unwrap();
+        let y = usize::try_from(position.y + self.offset.y).ok().unwrap();
+
+        self.grid[y].replace_range(x..x + 1, "o");
     }
 
     fn new_grid(width: u8, height: u8) -> Vec<String> {

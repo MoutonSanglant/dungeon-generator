@@ -107,9 +107,13 @@ impl Dungeon {
 
         map.resize(&min, &max);
 
-        for r in self.rooms.iter() {
-            let room = r.borrow_mut();
-            map.add_room(&room.rect);
+        for room in self.rooms.iter() {
+            map.add_room(&room.borrow().rect);
+            for connection in &room.borrow().connections {
+                for waypoint in &connection.borrow().path.waypoints {
+                    map.add_door(&waypoint);
+                }
+            }
         }
 
         map
@@ -121,6 +125,14 @@ impl Dungeon {
 
     pub fn add_room(&mut self, room: Room) {
         self.rooms.push(Rc::new(RefCell::new(room)));
+    }
+
+    pub fn make_paths(&mut self) {
+        for room in self.rooms.iter() {
+            for connection in room.borrow().connections.iter() {
+                connection.borrow_mut().make_path(&mut self.rng);
+            }
+        }
     }
 
     fn overlap_test(&self, rect: &Rectangle) -> bool {

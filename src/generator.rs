@@ -5,6 +5,7 @@ mod dungeon;
 mod errors;
 mod room;
 mod connection;
+mod path;
 
 use dungeon::Dungeon;
 use map::Map;
@@ -41,6 +42,7 @@ pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
         }
     }
 
+    dungeon.make_paths();
     dungeon.to_map()
 }
 
