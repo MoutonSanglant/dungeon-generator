@@ -4,7 +4,14 @@ pub struct Map {
     pub width: u8,
     pub height: u8,
     offset: Vector<i8>,
-    grid: Vec<String>,
+    grid: Vec<Tile>,
+}
+
+#[derive(Copy, Clone)]
+enum Tile {
+    Empty,
+    Floor,
+    Door,
 }
 
 impl Map {
@@ -22,7 +29,19 @@ impl Map {
     }
 
     pub fn to_string(&self) -> String {
-        self.grid.join("\n")
+        let mut map_string: String = self.grid.clone().into_iter().map(|i| {
+            match i {
+                Tile::Floor => "x",
+                Tile::Door => "o",
+                _ => ".",
+            }
+        }).collect();
+
+        for i in (0..self.grid.len()).step_by(self.width as usize).rev() {
+            map_string.insert(i, '\n');
+        }
+
+        map_string
     }
 
     pub fn clear(&mut self) {
@@ -53,23 +72,27 @@ impl Map {
     }
 
     pub fn add_room(&mut self, rect: &Rectangle) {
+        let signed_width = i8::try_from(self.width).ok().unwrap();
         for y in rect.p1.y..rect.p2.y {
-            let p1_x = usize::try_from(rect.p1.x + self.offset.x).ok().unwrap();
-            let p2_x = usize::try_from(rect.p2.x + self.offset.x).ok().unwrap();
-            let y = usize::try_from(y + self.offset.y).ok().unwrap();
+            let p1_x = rect.p1.x + self.offset.x;
+            let p2_x = rect.p2.x + self.offset.x;
+            let y = y + self.offset.y;
 
-            self.grid[y].replace_range(p1_x..p2_x, &"x".repeat(p2_x - p1_x));
+            for x in p1_x..p2_x {
+                self.grid[usize::try_from(x as u32 + y as u32 * signed_width as u32).ok().unwrap()] = Tile::Floor;
+            }
         }
     }
 
     pub fn add_door(&mut self, position: &Vector<i8>){
-        let x = usize::try_from(position.x + self.offset.x).ok().unwrap();
-        let y = usize::try_from(position.y + self.offset.y).ok().unwrap();
+        let signed_width = i8::try_from(self.width).ok().unwrap();
+        let x = position.x + self.offset.x;
+        let y = position.y + self.offset.y;
 
-        self.grid[y].replace_range(x..x + 1, "o");
+        self.grid[usize::try_from(x as u32 + y as u32 * signed_width as u32).ok().unwrap()] = Tile::Door;
     }
 
-    fn new_grid(width: u8, height: u8) -> Vec<String> {
-        vec![String::from(".".repeat(usize::from(width))); usize::from(height)]
+    fn new_grid(width: u8, height: u8) -> Vec<Tile> {
+        vec![Tile::Empty; usize::try_from(width as u32 * height as u32).ok().unwrap()]
     }
 }
