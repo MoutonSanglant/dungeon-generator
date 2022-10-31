@@ -35,8 +35,8 @@ impl Rectangle {
 
     pub fn size(&self) -> Vector<u8> {
         Vector {
-            x: u8::try_from(self.p2.x - self.p1.x).ok().unwrap(),
-            y: u8::try_from(self.p2.y - self.p1.y).ok().unwrap(),
+            x: (self.p2.x - self.p1.x) as u8,
+            y: (self.p2.y - self.p1.y) as u8,
         }
     }
 }

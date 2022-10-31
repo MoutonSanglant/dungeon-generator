@@ -45,13 +45,13 @@ impl Map {
     }
 
     pub fn clear(&mut self) {
-        self.grid = Map::new_grid(self.width, self.height);
+        self.grid = Map::new_grid(self.width as u32, self.height as u32);
     }
 
     pub fn resize(&mut self, min: &Vector<i8>, max: &Vector<i8>) {
         let (mut w, mut h) = self.size();
-        let width = u8::try_from(max.x - min.x).ok().unwrap();
-        let height = u8::try_from(max.y - min.y).ok().unwrap();
+        let width = (max.x - min.x) as u8;
+        let height = (max.y - min.y) as u8;
 
         if width > w {
             w = width;
@@ -72,27 +72,25 @@ impl Map {
     }
 
     pub fn add_room(&mut self, rect: &Rectangle) {
-        let signed_width = i8::try_from(self.width).ok().unwrap();
         for y in rect.p1.y..rect.p2.y {
-            let p1_x = rect.p1.x + self.offset.x;
-            let p2_x = rect.p2.x + self.offset.x;
-            let y = y + self.offset.y;
+            let p1_x = (rect.p1.x + self.offset.x) as u32;
+            let p2_x = (rect.p2.x + self.offset.x) as u32;
+            let y = (y + self.offset.y) as u32;
 
             for x in p1_x..p2_x {
-                self.grid[usize::try_from(x as u32 + y as u32 * signed_width as u32).ok().unwrap()] = Tile::Floor;
+                self.grid[(x + y * self.width as u32) as usize] = Tile::Floor;
             }
         }
     }
 
     pub fn add_door(&mut self, position: &Vector<i8>){
-        let signed_width = i8::try_from(self.width).ok().unwrap();
-        let x = position.x + self.offset.x;
-        let y = position.y + self.offset.y;
+        let x = (position.x + self.offset.x) as u32;
+        let y = (position.y + self.offset.y) as u32;
 
-        self.grid[usize::try_from(x as u32 + y as u32 * signed_width as u32).ok().unwrap()] = Tile::Door;
+        self.grid[(x + y * self.width as u32) as usize] = Tile::Door;
     }
 
-    fn new_grid(width: u8, height: u8) -> Vec<Tile> {
-        vec![Tile::Empty; usize::try_from(width as u32 * height as u32).ok().unwrap()]
+    fn new_grid(width: u32, height: u32) -> Vec<Tile> {
+        vec![Tile::Empty; (width * height) as usize]
     }
 }
