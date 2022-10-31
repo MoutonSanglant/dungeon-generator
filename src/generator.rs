@@ -3,16 +3,12 @@ pub mod math;
 
 mod dungeon;
 mod errors;
-mod room;
-mod connection;
-mod path;
 
 use dungeon::Dungeon;
 use map::Map;
 use math::{Rectangle, Vector};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
-use room::Room;
 
 pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
     let mut dungeon = Dungeon {
@@ -75,9 +71,5 @@ fn add_room(dungeon: &mut Dungeon, id: usize) {
         }
     };
 
-    dungeon.add_room(Room {
-        id,
-        rect,
-        connections: Vec::new(),
-    });
+    dungeon.add_room(id, rect);
 }

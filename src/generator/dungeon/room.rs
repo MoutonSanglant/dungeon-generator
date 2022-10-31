@@ -1,4 +1,4 @@
-use super::math::Rectangle;
+use crate::generator::math::Rectangle;
 use super::connection::Connection;
 use std::rc::Rc;
 use std::cell::RefCell;

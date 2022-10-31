@@ -1,6 +1,6 @@
+use crate::generator::math::Vector;
 use super::room::Room;
 use super::path::Path;
-use super::math::Vector;
 use std::rc::{Weak, Rc};
 use std::cell::RefCell;
 use rand_chacha::ChaCha8Rng;

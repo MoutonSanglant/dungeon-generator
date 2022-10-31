@@ -1,4 +1,4 @@
-use super::math::Vector;
+use crate::generator::math::Vector;
 
 pub struct Path {
     pub waypoints: Vec<Vector<i8>>,

@@ -1,7 +1,11 @@
+mod room;
+mod connection;
+mod path;
+
 use super::errors::PlacementError;
 use super::map::Map;
 use super::math::{Rectangle, Vector};
-use super::room::Room;
+use room::Room;
 use rand::seq::SliceRandom;
 use rand_chacha::ChaCha8Rng;
 use std::rc::Rc;
@@ -123,7 +127,12 @@ impl Dungeon {
         Room::connect(&self.rooms[first], &self.rooms[second])
     }
 
-    pub fn add_room(&mut self, room: Room) {
+    pub fn add_room(&mut self, id: usize, rect: Rectangle) {
+        let room = Room {
+            id,
+            rect,
+            connections: Vec::new(),
+        };
         self.rooms.push(Rc::new(RefCell::new(room)));
     }
 
