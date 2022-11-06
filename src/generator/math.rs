@@ -2,7 +2,7 @@ use std::cmp;
 use std::ops::Add;
 
 #[repr(C)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Vector<T> {
     pub x: T,
     pub y: T,
@@ -19,7 +19,7 @@ impl<T: Add<Output = T>> Add for Vector<T> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Rectangle {
     pub p1: Vector<i8>,
     pub p2: Vector<i8>,
@@ -31,6 +31,13 @@ impl Rectangle {
         let height_check = cmp::min(self.p2.y, other.p2.y) > cmp::max(self.p1.y, other.p1.y);
 
         width_check && height_check
+    }
+
+    pub fn is_inside(&self, p: Vector<i8>) -> bool {
+        p.x >= self.p1.x
+            && p.x < self.p2.x
+            && p.y >= self.p1.y
+            && p.y < self.p2.y
     }
 
     pub fn size(&self) -> Vector<u8> {

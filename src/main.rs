@@ -12,7 +12,7 @@ pub struct Args {
         short,
         long,
         value_parser,
-        default_value = "3",
+        default_value = "11",
         help = "Number of rooms"
     )]
     rooms: usize,
@@ -20,7 +20,7 @@ pub struct Args {
         long,
         multiple = true, number_of_values = 2,
         value_parser = clap::value_parser!(u8).range(2..),
-        default_values = &["2", "2"],
+        default_values = &["4", "4"],
         help = "Minimum size of a room"
     )]
     min: Vec<u8>,
@@ -29,7 +29,7 @@ pub struct Args {
         multiple = true,
         number_of_values = 2,
         value_parser = clap::value_parser!(u8).range(2..),
-        default_values = &["5", "5"],
+        default_values = &["7", "7"],
         help = "Maximum size of a room"
     )]
     max: Vec<u8>,
@@ -45,7 +45,9 @@ fn main() -> ExitCode {
         return ExitCode::from(101);
     }
 
-    generate(config.unwrap());
+    let map = generate(config.unwrap());
+
+    println!("Generated map:\n{}", map.to_string());
 
     ExitCode::from(0)
 }

@@ -8,7 +8,9 @@ authors = ["vxdcxw <defresne.thierry@gmail.com>"]
 crate-type = ["lib","staticlib"]
 
 [dependencies]
+approx = "0.5.1"
 libc = "0.2"
 clap = { version = "3.2.22", features = ["derive"] }
+nalgebra = "0.31.3"
 rand = "0.8.5"
 rand_chacha = "0.3.1"

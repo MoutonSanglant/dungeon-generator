@@ -82,29 +82,17 @@ impl Dungeon {
 
         for r in self.rooms.iter() {
             let room = r.borrow_mut();
-            min.x = if room.rect.p1.x < min.x {
-                room.rect.p1.x
-            } else {
-                min.x
-            };
 
-            min.y = if room.rect.p1.y < min.y {
-                room.rect.p1.y
-            } else {
-                min.y
-            };
+            (min, max) = self.get_min_max(min, max, &room.rect.p1, &room.rect.p2);
 
-            max.x = if room.rect.p2.x > max.x {
-                room.rect.p2.x
-            } else {
-                max.x
-            };
+            for connection_ref in room.connections.iter() {
+                let connection = connection_ref.borrow_mut();
 
-            max.y = if room.rect.p2.y > max.y {
-                room.rect.p2.y
-            } else {
-                max.y
-            };
+                for waypoint in connection.path.waypoints.iter() {
+                    (min, max) = self.get_min_max(min, max, waypoint, waypoint);
+                }
+
+            }
         }
 
         let mut map = Map::build();
@@ -157,5 +145,33 @@ impl Dungeon {
         }
 
         overlap
+    }
+
+    fn get_min_max(&self, mut min: Vector<i8>, mut max: Vector<i8>, p1: &Vector<i8>, p2: &Vector<i8>) -> (Vector<i8>, Vector<i8>) {
+        min.x = if p1.x < min.x {
+            p1.x
+        } else {
+            min.x
+        };
+
+        min.y = if p1.y < min.y {
+            p1.y
+        } else {
+            min.y
+        };
+
+        max.x = if p2.x > max.x {
+            p2.x
+        } else {
+            max.x
+        };
+
+        max.y = if p2.y > max.y {
+            p2.y
+        } else {
+            max.y
+        };
+
+        (min, max)
     }
 }
