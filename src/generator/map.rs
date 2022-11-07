@@ -107,7 +107,6 @@ impl Map {
             let max_x = cmp::max(from.x, to.x);
             for x in min_x..=max_x {
                 let x = (x + self.offset.x) as u32;
-                println!("x: {}", x);
                 let y = (from.y + self.offset.y) as u32;
                 self.grid[(x + y * self.width as u32) as usize] = Tile::Corridor;
             }
