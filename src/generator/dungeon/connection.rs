@@ -44,9 +44,9 @@ impl Connection {
                 rng
             );
 
-            self.path.waypoints.push(from_pos);
-            self.path.waypoints.append(&mut path);
             self.path.waypoints.push(to_pos);
+            self.path.waypoints.append(&mut path);
+            self.path.waypoints.push(from_pos);
         }
     }
 
