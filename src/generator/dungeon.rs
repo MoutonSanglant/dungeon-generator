@@ -102,8 +102,20 @@ impl Dungeon {
         for room in self.rooms.iter() {
             map.add_room(&room.borrow().rect);
             for connection in &room.borrow().connections {
-                for waypoint in &connection.borrow().path.waypoints {
-                    map.add_door(&waypoint);
+                let waypoints = &connection.borrow().path.waypoints;
+                let len = waypoints.len();
+                for i in 0..len {
+                    if i == len - 1 {
+                        map.add_door(&waypoints[i]);
+                        break;
+                    }
+                    else {
+                        map.add_corridor(&waypoints[i], &waypoints[i + 1]);
+
+                        if i == 0 {
+                            map.add_door(&waypoints[i]);
+                        }
+                    }
                 }
             }
         }

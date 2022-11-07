@@ -1,4 +1,5 @@
 use super::math::{Rectangle, Vector};
+use std::cmp;
 
 pub struct Map {
     pub width: u8,
@@ -12,6 +13,7 @@ enum Tile {
     Empty,
     Floor,
     Door,
+    Corridor,
 }
 
 impl Map {
@@ -32,6 +34,7 @@ impl Map {
         let mut map_string: String = self.grid.clone().into_iter().map(|i| {
             match i {
                 Tile::Floor => "x",
+                Tile::Corridor => "#",
                 Tile::Door => "o",
                 _ => ".",
             }
@@ -83,11 +86,32 @@ impl Map {
         }
     }
 
-    pub fn add_door(&mut self, position: &Vector<i8>){
+    pub fn add_door(&mut self, position: &Vector<i8>) {
         let x = (position.x + self.offset.x) as u32;
         let y = (position.y + self.offset.y) as u32;
 
         self.grid[(x + y * self.width as u32) as usize] = Tile::Door;
+    }
+
+    pub fn add_corridor(&mut self, from: &Vector<i8>, to: &Vector<i8>) {
+        if from.x == to.x {
+            let min_y = cmp::min(from.y, to.y);
+            let max_y = cmp::max(from.y, to.y);
+            for y in min_y..=max_y {
+                let x = (from.x + self.offset.x) as u32;
+                let y = (y + self.offset.y) as u32;
+                self.grid[(x + y * self.width as u32) as usize] = Tile::Corridor;
+            }
+        } else {
+            let min_x = cmp::min(from.x, to.x);
+            let max_x = cmp::max(from.x, to.x);
+            for x in min_x..=max_x {
+                let x = (x + self.offset.x) as u32;
+                println!("x: {}", x);
+                let y = (from.y + self.offset.y) as u32;
+                self.grid[(x + y * self.width as u32) as usize] = Tile::Corridor;
+            }
+        }
     }
 
     fn new_grid(width: u32, height: u32) -> Vec<Tile> {
