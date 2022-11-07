@@ -30,9 +30,8 @@ impl Connection {
         Rc::ptr_eq(&self.to.upgrade().unwrap(), room)
     }
 
-    pub fn make_path(&mut self, rng: &mut ChaCha8Rng) {
-        if self.path.waypoints.len() <= 0
-        {
+    pub fn make_path(&mut self, rng: &mut ChaCha8Rng, path_extension: (u8, u8)) {
+        if self.path.waypoints.len() <= 0 {
             let (from_pos, from_dir) = Connection::create_room_exit(rng, &self.from, &self.to).unwrap();
             let (to_pos, _to_dir) = Connection::create_room_exit(rng, &self.to, &self.from).unwrap();
 
@@ -41,7 +40,8 @@ impl Connection {
                 from_dir.clone(),
                 to_pos.clone(),
                 &self.to.upgrade().unwrap().borrow().rect,
-                rng
+                path_extension,
+                rng,
             );
 
             self.path.waypoints.push(to_pos);
@@ -51,7 +51,7 @@ impl Connection {
     }
 
     /// Find a path going from one point to another, avoiding penetration into the destination room
-    fn find_path(from_pos: Vector<i8>, from_dir: Direction, to_pos: Vector<i8>, to_rect: &Rectangle, rng: &mut ChaCha8Rng) -> Vec<Vector<i8>> {
+    fn find_path(from_pos: Vector<i8>, from_dir: Direction, to_pos: Vector<i8>, to_rect: &Rectangle, path_extension: (u8, u8), rng: &mut ChaCha8Rng) -> Vec<Vector<i8>> {
         let rot = match from_dir {
             Direction::North => Rotation2::identity(),
             Direction::South => Rotation2::new(std::f32::consts::FRAC_PI_2 * 2.0),
@@ -62,14 +62,14 @@ impl Connection {
         let pos_to = rot * Point2::new(to_pos.x as f32, to_pos.y as f32);
         let mut path = Vec::new();
 
-        match Connection::find_next_waypoint(&mut path, pos_from, pos_to, to_rect, rot.inverse(), 0, rng) {
+        match Connection::find_next_waypoint(&mut path, pos_from, pos_to, to_rect, rot.inverse(), 0, path_extension, rng) {
             _ => path,
         }
     }
 
     /// Find the next waypoint of the path.
     /// This method assumes points are rotated toward North (Y-)
-    fn find_next_waypoint(path: &mut Vec<Vector<i8>>, p: Point2<f32>, pos_to: Point2<f32>, rect_to: &Rectangle, inv: Rotation2<f32>, iteration: i8, rng: &mut ChaCha8Rng) -> Option<bool> {
+    fn find_next_waypoint(path: &mut Vec<Vector<i8>>, p: Point2<f32>, pos_to: Point2<f32>, rect_to: &Rectangle, inv: Rotation2<f32>, iteration: i8, path_extension: (u8, u8), rng: &mut ChaCha8Rng) -> Option<bool> {
         if iteration > 10 {
             return None;
         }
@@ -78,7 +78,7 @@ impl Connection {
         let mut p2 = Point2::new(p.x, p.y);
 
         if delta <= 0f32 {
-            p2.y -= 2.0; // TODO - use a random range between 2 and 5
+            p2.y -= rng.gen_range(path_extension.0..path_extension.1) as f32;
         }
         else
         {
@@ -114,7 +114,7 @@ impl Connection {
         let mut retry = 0;
 
         loop {
-            match Connection::find_next_waypoint(path, next_rot * p2, next_rot * pos_to, rect_to, inv * next_rot.inverse(), iteration + 1, rng) {
+            match Connection::find_next_waypoint(path, next_rot * p2, next_rot * pos_to, rect_to, inv * next_rot.inverse(), iteration + 1, path_extension, rng) {
                 Some(true) => {
                     let world_point = inv * p2;
                     let pos = Vector { x: world_point.x.round() as i8, y: world_point.y.round() as i8 };
@@ -122,7 +122,7 @@ impl Connection {
                     break;
                 },
                 Some(false) => {
-                    p2.y -= 2.0;
+                    p2.y -= rng.gen_range(path_extension.0..path_extension.1) as f32;
                 }
                 _ => {
                     return None;

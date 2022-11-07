@@ -15,6 +15,7 @@ pub struct Dungeon {
     pub min_size: Vector<u8>,
     pub max_size: Vector<u8>,
     pub rooms_spacing: (u8, u8),
+    pub path_extension: (u8, u8),
     pub rooms: Vec<Rc<RefCell<Room>>>,
     pub rng: ChaCha8Rng,
 }
@@ -141,7 +142,7 @@ impl Dungeon {
     pub fn make_paths(&mut self) {
         for room in self.rooms.iter() {
             for connection in room.borrow().connections.iter() {
-                connection.borrow_mut().make_path(&mut self.rng);
+                connection.borrow_mut().make_path(&mut self.rng, self.path_extension);
             }
         }
     }

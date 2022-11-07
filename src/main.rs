@@ -39,14 +39,23 @@ pub struct Args {
         number_of_values = 2,
         value_parser = clap::value_parser!(u8).range(2..),
         default_values = &["3", "5"],
-        help = "spacing between rooms"
+        help = "Min & Max spacing between rooms"
     )]
     spacing: (u8, u8),
+    #[clap(
+        long,
+        multiple = true,
+        number_of_values = 2,
+        value_parser = clap::value_parser!(u8).range(2..),
+        default_values = &["2", "4"],
+        help = "Min & Max size when extending a path"
+    )]
+    extension: (u8, u8),
 }
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let config = Config::build(args.seed, args.rooms, args.min, args.max, args.spacing);
+    let config = Config::build(args.seed, args.rooms, args.min, args.max, args.spacing, args.extension);
 
     if let Err(e) = config {
         println!("Process exited with error: {}", e);

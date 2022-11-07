@@ -19,6 +19,7 @@ pub struct Config {
     pub rooms_min_size: Vector<u8>,
     pub rooms_max_size: Vector<u8>,
     pub rooms_spacing: MinMax,
+    pub path_extension: MinMax,
 }
 
 #[repr(C)]
@@ -35,6 +36,7 @@ impl Config {
         min: Vec<u8>,
         max: Vec<u8>,
         spacing: (u8, u8),
+        extension: (u8, u8),
     ) -> Result<Config, &'static str> {
         let min = Vector {
             x: min[0],
@@ -55,6 +57,7 @@ impl Config {
             rooms_min_size: min,
             rooms_max_size: max,
             rooms_spacing: MinMax { min: spacing.0, max: spacing.1 },
+            path_extension: MinMax { min: extension.0, max: extension.1 },
         })
     }
 
@@ -64,7 +67,8 @@ impl Config {
             rooms_count: 0,
             rooms_min_size: Vector { x: 0, y: 0 },
             rooms_max_size: Vector { x: 0, y: 0 },
-            rooms_spacing: MinMax { min: 0, max: 0},
+            rooms_spacing: MinMax { min: 0, max: 0 },
+            path_extension: MinMax { min: 0, max: 0 },
         }
     }
 }
@@ -84,6 +88,7 @@ pub extern "C" fn generate_ext(config: *mut Config) -> *mut CMap {
         Vec::from([cfg.rooms_min_size.x, cfg.rooms_min_size.y]),
         Vec::from([cfg.rooms_max_size.x, cfg.rooms_max_size.y]),
         (cfg.rooms_spacing.min, cfg.rooms_spacing.max),
+        (cfg.path_extension.min, cfg.path_extension.max),
     );
 
     drop(cfg);
@@ -105,5 +110,6 @@ pub fn generate(config: Config) -> Map {
         config.rooms_min_size,
         config.rooms_max_size,
         (config.rooms_spacing.min, config.rooms_spacing.max),
+        (config.path_extension.min, config.path_extension.max),
     )
 }
