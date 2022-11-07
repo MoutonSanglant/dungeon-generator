@@ -12,7 +12,6 @@ enum Tile {
     Empty,
     Floor,
     Door,
-    Origin,
 }
 
 impl Map {
@@ -34,7 +33,6 @@ impl Map {
             match i {
                 Tile::Floor => "x",
                 Tile::Door => "o",
-                Tile::Origin => "@",
                 _ => ".",
             }
         }).collect();
@@ -83,7 +81,6 @@ impl Map {
                 self.grid[(x + y * self.width as u32) as usize] = Tile::Floor;
             }
         }
-        self.grid[(self.offset.x + self.offset.y * self.width as i8) as usize] = Tile::Origin;
     }
 
     pub fn add_door(&mut self, position: &Vector<i8>){
