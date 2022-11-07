@@ -6,7 +6,7 @@ use super::errors::PlacementError;
 use super::map::Map;
 use super::math::{Rectangle, Vector};
 use room::Room;
-use rand::seq::SliceRandom;
+use rand::{seq::SliceRandom, Rng};
 use rand_chacha::ChaCha8Rng;
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -14,6 +14,7 @@ use std::cell::RefCell;
 pub struct Dungeon {
     pub min_size: Vector<u8>,
     pub max_size: Vector<u8>,
+    pub rooms_spacing: (u8, u8),
     pub rooms: Vec<Rc<RefCell<Room>>>,
     pub rng: ChaCha8Rng,
 }
@@ -58,12 +59,13 @@ impl Dungeon {
     fn get_rectangle(&self, rect: Rectangle, size: Vector<i8>, direction: Direction) -> Rectangle {
         let mut position = rect.p1;
         let p2 = rect.p2;
+        let spacing = self.rng.clone().gen_range(self.rooms_spacing.0..self.rooms_spacing.1) as i8;
 
         match direction {
-            Direction::North => position.y = p2.y + 1,
-            Direction::East  => position.x = p2.x + 1,
-            Direction::South => position.y = position.y - (1 + size.y),
-            Direction::West  => position.x = position.x - (1 + size.x),
+            Direction::North => position.y = p2.y + spacing,
+            Direction::East  => position.x = p2.x + spacing,
+            Direction::South => position.y = position.y - (spacing + size.y),
+            Direction::West  => position.x = position.x - (spacing + size.x),
         }
 
         Rectangle {

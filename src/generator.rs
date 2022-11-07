@@ -10,11 +10,12 @@ use math::{Rectangle, Vector};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
-pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>) -> Map {
+pub fn run(seed: u64, rooms: usize, min: Vector<u8>, max: Vector<u8>, spacing: (u8, u8)) -> Map {
     let mut dungeon = Dungeon {
         rooms: Vec::new(),
         min_size: min,
         max_size: max,
+        rooms_spacing: (spacing.0, spacing.1),
         rng: ChaCha8Rng::seed_from_u64(seed),
     };
 
