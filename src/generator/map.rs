@@ -30,7 +30,7 @@ impl Map {
         (self.width, self.height)
     }
 
-    pub fn to_string(&self) -> String {
+    pub fn to_ascii(&self) -> String {
         let mut map_string: String = self.grid.clone().into_iter().map(|i| {
             match i {
                 Tile::Floor => "x",

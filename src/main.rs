@@ -47,7 +47,7 @@ fn main() -> ExitCode {
 
     let map = generate(config.unwrap());
 
-    println!("Generated map:\n{}", map.to_string());
+    println!("Generated map:\n{}", map.to_ascii());
 
     ExitCode::from(0)
 }

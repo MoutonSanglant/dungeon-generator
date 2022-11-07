@@ -77,7 +77,7 @@ pub extern "C" fn generate_ext(config: *mut Config) -> *mut CMap {
     drop(cfg);
 
     let map = generate(c.unwrap());
-    let c_str_grid = CString::new(map.to_string()).unwrap();
+    let c_str_grid = CString::new(map.to_ascii()).unwrap();
 
     Box::into_raw(Box::new(CMap {
         width: map.width,
