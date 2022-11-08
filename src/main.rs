@@ -41,7 +41,7 @@ pub struct Args {
         default_values = &["3", "5"],
         help = "Min & Max spacing between rooms"
     )]
-    spacing: (u8, u8),
+    spacing: Vec<u8>,
     #[clap(
         long,
         multiple = true,
@@ -50,12 +50,18 @@ pub struct Args {
         default_values = &["2", "4"],
         help = "Min & Max size when extending a path"
     )]
-    extension: (u8, u8),
+    extension: Vec<u8>,
 }
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let config = Config::build(args.seed, args.rooms, args.min, args.max, args.spacing, args.extension);
+    let config = Config::build(args.seed,
+                               args.rooms,
+                               args.min,
+                               args.max,
+                               (args.spacing[0], args.spacing[1]),
+                               (args.spacing[0], args.spacing[1]),
+                            );
 
     if let Err(e) = config {
         println!("Process exited with error: {}", e);
@@ -63,9 +69,26 @@ fn main() -> ExitCode {
         return ExitCode::from(101);
     }
 
-    let map = generate(config.unwrap());
+    println!("Map seed: {}", args.seed);
+    println!("Number of rooms: {}", args.rooms);
 
-    println!("Generated map:\n{}", map.to_ascii());
+    let map = generate(config.unwrap());
+    let bytes = map.to_bytes();
+    let width = map.width as i32;
+
+    println!("Map size: {}x{}", map.width, map.height);
+    println!("");
+    println!("Generated map (ASCII): {}", map.to_ascii());
+    println!("");
+    println!("Generated map (bytes):");
+
+    for y in 0..map.height {
+        let y = y as i32;
+        let from = (y * width) as usize;
+        let to = (y * width + width) as usize;
+
+        println!("{}", &bytes[from..to].into_iter().map(|i| i.to_string()).collect::<String>());
+    }
 
     ExitCode::from(0)
 }
