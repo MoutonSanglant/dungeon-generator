@@ -2,14 +2,12 @@ mod generator;
 
 use generator::map::Map;
 use generator::{math::Vector, run};
-use libc::c_char;
+use libc::{c_char, c_uchar};
 use std::ffi::CString;
 
 #[repr(C)]
-pub struct CMap {
-    width: u8,
-    height: u8,
-    grid: *mut c_char,
+pub struct Handle {
+    _data: Map,
 }
 
 #[repr(C)]
@@ -79,7 +77,7 @@ pub extern "C" fn get_config() -> *mut Config {
 }
 
 #[no_mangle]
-pub extern "C" fn generate_ext(config: *mut Config) -> *mut CMap {
+pub extern "C" fn map_create(config: *mut Config) -> *mut Handle {
     let cfg = unsafe { Box::<Config>::from_raw(config) };
 
     let c = Config::build(
@@ -93,14 +91,52 @@ pub extern "C" fn generate_ext(config: *mut Config) -> *mut CMap {
 
     drop(cfg);
 
-    let map = generate(c.unwrap());
-    let c_str_grid = CString::new(map.to_ascii()).unwrap();
+    Box::into_raw(Box::new(Handle { _data: generate(c.unwrap()) }))
+}
 
-    Box::into_raw(Box::new(CMap {
-        width: map.width,
-        height: map.height,
-        grid: c_str_grid.into_raw(),
-    }))
+#[no_mangle]
+pub unsafe extern "C" fn map_destroy(handle: *mut Handle) -> std::os::raw::c_int {
+    if !handle.is_null() {
+        let _ = Box::from_raw(handle);
+
+        return 0;
+    }
+
+    -1
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn map_size(handle: *mut Handle) -> Vector<u8> {
+    if let Some(handle) = handle.as_mut() {
+        return Vector { x: handle._data.width, y: handle._data.height };
+    }
+
+    Vector { x: 0, y: 0 }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn map_as_string(handle: *mut Handle) -> *mut c_char {
+    if let Some(handle) = handle.as_mut() {
+        let c_str_grid = CString::new(handle._data.to_ascii()).unwrap();
+
+        return c_str_grid.into_raw();
+    }
+
+    CString::new("").unwrap().into_raw()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn map_as_bytes(handle: *mut Handle) -> *mut c_uchar {
+    if let Some(handle) = handle.as_mut() {
+        let mut vec = handle._data.to_bytes();
+        let ptr = vec.as_mut_ptr();
+
+        std::mem::forget(vec);
+
+        return ptr;
+    }
+
+    Box::into_raw(Box::new(Vec::<u8>::new())) as *mut _
 }
 
 pub fn generate(config: Config) -> Map {

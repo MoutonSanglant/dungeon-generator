@@ -47,6 +47,19 @@ impl Map {
         map_string
     }
 
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let map_bytes: Vec<u8> = self.grid.clone().into_iter().map(|i| {
+            match i {
+                Tile::Floor => 1,
+                Tile::Corridor => 2,
+                Tile::Door => 3,
+                _ => 0,
+            }
+        }).collect();
+
+        map_bytes
+    }
+
     pub fn clear(&mut self) {
         self.grid = Map::new_grid(self.width as u32, self.height as u32);
     }
