@@ -8,6 +8,7 @@ use dungeon::Dungeon;
 use map::Map;
 use math::{Rectangle, Vector};
 use rand::{Rng, SeedableRng};
+use rand::distributions::{WeightedIndex, Distribution};
 use rand_chacha::ChaCha8Rng;
 
 pub fn run(seed: u64,
@@ -30,6 +31,11 @@ pub fn run(seed: u64,
         panic!("Room size must be in the range [0,128)")
     }
 
+    let mut rng = dungeon.rng.clone();
+    let choices = [1, 2, 3, 4];
+    let weights = [100, 5, 2, 1];
+    let dist = WeightedIndex::new(&weights).unwrap();
+
     for i in 0..rooms {
         add_room(&mut dungeon, i);
 
@@ -37,8 +43,8 @@ pub fn run(seed: u64,
             continue;
         }
 
-        let mut rng = dungeon.rng.clone();
-        let connections = rng.gen_range(1..=i.min(4));
+        let choice = choices[dist.sample(&mut rng)];
+        let connections = rng.gen_range(1..=i.min(choice));
         let other_ids = (0..connections).map(|_| rng.gen_range(0..i));
 
         for other_id in other_ids {
