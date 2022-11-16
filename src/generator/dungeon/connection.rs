@@ -149,13 +149,9 @@ impl Connection {
             y: rng.gen_range((rect.p1.y + 1)..(rect.p2.y - 2)),
         };
 
-        // use even-only values ...
-        coords.x = if coords.x % 2 == 0 { coords.x } else { coords.x - 1 };
-        coords.y = if coords.y % 2 == 0 { coords.y } else { coords.y - 1 };
-
-        // ... and avoid corner coordss
-        coords.x = if coords.x == rect.p1.x { coords.x + 2 } else { coords.x };
-        coords.y = if coords.y == rect.p1.y { coords.y + 2 } else { coords.y };
+        // ... and avoid corner coords
+        //coords.x = if coords.x == rect.p1.x { coords.x + 2 } else { coords.x };
+        //coords.y = if coords.y == rect.p1.y { coords.y + 2 } else { coords.y };
 
         let mut directions: Vec<Direction> = vec![
             Direction::North,
@@ -175,6 +171,10 @@ impl Connection {
                 Direction::East => position.x = rect.p2.x - 1,
                 Direction::West => position.x = rect.p1.x,
             }
+
+            // align the point to even cells on grid
+            position.x = if position.x % 2 == 0 { position.x } else { position.x - 1 };
+            position.y = if position.y % 2 == 0 { position.y } else { position.y - 1 };
 
             let test_point = match direction {
                 Direction::North => Vector { x: position.x, y: position.y - 2 },

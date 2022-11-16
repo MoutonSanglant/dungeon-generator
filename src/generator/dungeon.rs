@@ -58,24 +58,28 @@ impl Dungeon {
     }
 
     fn get_rectangle(&self, rect: Rectangle, size: Vector<i8>, direction: Direction) -> Rectangle {
-        let mut position = rect.p1;
-        let p2 = rect.p2;
+        let mut p1 = rect.p1;
         let spacing = self.rng.clone().gen_range(self.rooms_spacing.0..self.rooms_spacing.1) as i8;
 
         match direction {
-            Direction::North => position.y = p2.y + spacing,
-            Direction::East  => position.x = p2.x + spacing,
-            Direction::South => position.y = position.y - (spacing + size.y),
-            Direction::West  => position.x = position.x - (spacing + size.x),
+            Direction::North => p1.y = rect.p2.y + spacing,
+            Direction::East  => p1.x = rect.p2.x + spacing,
+            Direction::South => p1.y = p1.y - (spacing + size.y),
+            Direction::West  => p1.x = p1.x - (spacing + size.x),
         }
 
+        // align the point to even cells on grid
+        p1.x = if p1.x % 2 == 0 { p1.x } else { p1.x - 1 };
+        p1.y = if p1.y % 2 == 0 { p1.y } else { p1.y - 1 };
+
+        let mut p2 = p1.clone() + size;
+        // align the point to odd cells on grid
+        p2.x = if p2.x % 2 == 0 { p2.x + 1 } else { p2.x };
+        p2.y = if p2.y % 2 == 0 { p2.y + 1 } else { p2.y };
+
         Rectangle {
-            p1: position.clone(),
-            p2: position.clone()
-                + Vector {
-                    x: size.x,
-                    y: size.y,
-                },
+            p1,
+            p2,
         }
     }
 

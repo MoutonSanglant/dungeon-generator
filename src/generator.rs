@@ -67,12 +67,14 @@ fn add_room(dungeon: &mut Dungeon, id: usize) {
     };
 
     let rect = if id == 0 {
+        let mut p2 = signed_size;
+        // align the point to odd cells on grid
+        p2.x = if p2.x % 2 == 0 { p2.x + 1 } else { p2.x };
+        p2.y = if p2.y % 2 == 0 { p2.y + 1 } else { p2.y };
+
         Rectangle {
             p1: Vector { x: 0, y: 0 },
-            p2: Vector {
-                x: signed_size.x,
-                y: signed_size.y,
-            },
+            p2,
         }
     } else {
         match dungeon.find_empty_space(signed_size) {
