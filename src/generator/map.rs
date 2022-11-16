@@ -113,7 +113,11 @@ impl Map {
             for y in min_y..=max_y {
                 let x = (from.x + self.offset.x) as u32;
                 let y = (y + self.offset.y) as u32;
-                self.grid[(x + y * self.width as u32) as usize] = Tile::Corridor;
+                let n = (x + y * self.width as u32) as usize;
+                match self.grid[n] {
+                    Tile::Empty => self.grid[n] = Tile::Corridor,
+                    _ => (),
+                }
             }
         } else {
             let min_x = cmp::min(from.x, to.x);
@@ -121,7 +125,11 @@ impl Map {
             for x in min_x..=max_x {
                 let x = (x + self.offset.x) as u32;
                 let y = (from.y + self.offset.y) as u32;
-                self.grid[(x + y * self.width as u32) as usize] = Tile::Corridor;
+                let n = (x + y * self.width as u32) as usize;
+                match self.grid[n] {
+                    Tile::Empty => self.grid[n] = Tile::Corridor,
+                    _ => (),
+                }
             }
         }
     }
