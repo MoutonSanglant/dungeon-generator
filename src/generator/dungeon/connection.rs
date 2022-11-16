@@ -69,33 +69,30 @@ impl Connection {
 
     /// Find the next waypoint of the path.
     /// This method assumes points are rotated toward North (Y-)
-    fn find_next_waypoint(path: &mut Vec<Vector<i8>>, p: Point2<f32>, pos_to: Point2<f32>, rect_to: &Rectangle, inv: Rotation2<f32>, iteration: i8, path_extension: (u8, u8), rng: &mut ChaCha8Rng) -> Option<bool> {
+    fn find_next_waypoint(path: &mut Vec<Vector<i8>>, pos_from: Point2<f32>, pos_to: Point2<f32>, rect_to: &Rectangle, inv: Rotation2<f32>, iteration: i8, path_extension: (u8, u8), rng: &mut ChaCha8Rng) -> Option<bool> {
         if iteration > 10 {
             return None;
         }
-
-        let delta = p.y - pos_to.y;
-        let mut p2 = Point2::new(p.x, p.y);
+        let delta = pos_from.y - pos_to.y;
+        let mut pos_next = Point2::new(pos_from.x, pos_from.y);
 
         if delta <= 0f32 {
-            p2.y -= rng.gen_range(path_extension.0..path_extension.1) as f32;
+            pos_next.y -= rng.gen_range(path_extension.0..path_extension.1) as f32;
         }
-        else
+        else if iteration > 0
         {
-            p2.y -= delta;
-            let world_to = inv * Point2::new(p2.x, p2.y + 1f32);
+            pos_next.y -= delta;
+            let world_to = inv * Point2::new(pos_next.x, pos_next.y + 1f32);
 
             if rect_to.is_inside(Vector { x: world_to.x.round() as i8, y: world_to.y.round() as i8 }) {
-                p2.y = p.y - (delta / 2.0);
-
                 return Some(false);
             }
-            else if relative_eq!(p2, pos_to) {
+            else if relative_eq!(pos_next, pos_to) {
                 return Some(true);
             }
         }
 
-        let rot_delta = p.x - pos_to.x;
+        let rot_delta = pos_from.x - pos_to.x;
         let next_rot = if relative_eq!(rot_delta, 0f32) {
             let r = rng.gen_range(0..1);
             if r == 0 {
@@ -114,15 +111,19 @@ impl Connection {
         let mut retry = 0;
 
         loop {
-            match Connection::find_next_waypoint(path, next_rot * p2, next_rot * pos_to, rect_to, inv * next_rot.inverse(), iteration + 1, path_extension, rng) {
+            match Connection::find_next_waypoint(path, next_rot * pos_next, next_rot * pos_to, rect_to, inv * next_rot.inverse(), iteration + 1, path_extension, rng) {
                 Some(true) => {
-                    let world_point = inv * p2;
-                    let pos = Vector { x: world_point.x.round() as i8, y: world_point.y.round() as i8 };
+                    let world_point = inv * pos_next;
+                    let mut pos = Vector { x: world_point.x.round() as i8, y: world_point.y.round() as i8 };
+                    // align the point to even cells on grid, it works because
+                    // the same transform is applied to all points in the path
+                    pos.x = if pos.x % 2 == 0 { pos.x } else { pos.x - 1 };
+                    pos.y = if pos.y % 2 == 0 { pos.y } else { pos.y - 1 };
                     path.push(pos);
                     break;
                 },
                 Some(false) => {
-                    p2.y -= rng.gen_range(path_extension.0..path_extension.1) as f32;
+                    pos_next.y -= rng.gen_range(path_extension.0..path_extension.1) as f32;
                 }
                 _ => {
                     return None;
