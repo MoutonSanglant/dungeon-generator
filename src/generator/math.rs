@@ -2,7 +2,7 @@ use std::cmp;
 use std::ops::Add;
 
 #[repr(C)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Vector<T> {
     pub x: T,
     pub y: T,

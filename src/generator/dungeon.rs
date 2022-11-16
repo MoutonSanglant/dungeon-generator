@@ -8,6 +8,7 @@ use super::math::{Rectangle, Vector};
 use room::Room;
 use rand::{seq::SliceRandom, Rng};
 use rand_chacha::ChaCha8Rng;
+use std::cmp;
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -90,13 +91,13 @@ impl Dungeon {
         for r in self.rooms.iter() {
             let room = r.borrow_mut();
 
-            (min, max) = self.get_min_max(min, max, &room.rect.p1, &room.rect.p2);
+            (min, max) = Dungeon::get_min_max(min, max, &room.rect.p1, &room.rect.p2);
 
             for connection_ref in room.connections.iter() {
                 let connection = connection_ref.borrow_mut();
 
                 for waypoint in connection.path.waypoints.iter() {
-                    (min, max) = self.get_min_max(min, max, waypoint, waypoint);
+                    (min, max) = Dungeon::get_min_max(min, max, waypoint, waypoint);
                 }
 
             }
@@ -166,30 +167,12 @@ impl Dungeon {
         overlap
     }
 
-    fn get_min_max(&self, mut min: Vector<i8>, mut max: Vector<i8>, p1: &Vector<i8>, p2: &Vector<i8>) -> (Vector<i8>, Vector<i8>) {
-        min.x = if p1.x < min.x {
-            p1.x
-        } else {
-            min.x
-        };
+    fn get_min_max(mut min: Vector<i8>, mut max: Vector<i8>, p1: &Vector<i8>, p2: &Vector<i8>) -> (Vector<i8>, Vector<i8>) {
 
-        min.y = if p1.y < min.y {
-            p1.y
-        } else {
-            min.y
-        };
-
-        max.x = if p2.x > max.x {
-            p2.x
-        } else {
-            max.x
-        };
-
-        max.y = if p2.y > max.y {
-            p2.y
-        } else {
-            max.y
-        };
+        min.x = cmp::min(p1.x, min.x);
+        min.y = cmp::min(p1.y, min.y);
+        max.x = cmp::max(p2.x, max.x);
+        max.y = cmp::max(p2.y, max.y);
 
         (min, max)
     }
