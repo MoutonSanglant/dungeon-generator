@@ -6,6 +6,7 @@ use super::room::Room;
 use super::path::Path;
 use std::rc::{Weak, Rc};
 use std::cell::RefCell;
+use std::cmp;
 use rand_chacha::ChaCha8Rng;
 use rand::{seq::SliceRandom, Rng};
 use na::{Point2, Rotation2};
@@ -37,6 +38,7 @@ impl Connection {
 
             let mut path = Connection::find_path(
                 from_pos.clone(),
+                &self.from.upgrade().unwrap().borrow().rect,
                 from_dir.clone(),
                 to_pos.clone(),
                 &self.to.upgrade().unwrap().borrow().rect,
@@ -51,7 +53,7 @@ impl Connection {
     }
 
     /// Find a path going from one point to another, avoiding penetration into the destination room
-    fn find_path(from_pos: Vector<i8>, from_dir: Direction, to_pos: Vector<i8>, to_rect: &Rectangle, path_extension: (u8, u8), rng: &mut ChaCha8Rng) -> Vec<Vector<i8>> {
+    fn find_path(from_pos: Vector<i8>, from_rect: &Rectangle, from_dir: Direction, to_pos: Vector<i8>, to_rect: &Rectangle, path_extension: (u8, u8), rng: &mut ChaCha8Rng) -> Vec<Vector<i8>> {
         let rot = match from_dir {
             Direction::North => Rotation2::identity(),
             Direction::South => Rotation2::new(std::f32::consts::FRAC_PI_2 * 2.0),
@@ -62,14 +64,14 @@ impl Connection {
         let pos_to = rot * Point2::new(to_pos.x as f32, to_pos.y as f32);
         let mut path = Vec::new();
 
-        match Connection::find_next_waypoint(&mut path, pos_from, pos_to, to_rect, rot.inverse(), 0, path_extension, rng) {
+        match Connection::find_next_waypoint(&mut path, pos_from, pos_to, from_rect, to_rect, rot.inverse(), 0, path_extension, rng) {
             _ => path,
         }
     }
 
     /// Find the next waypoint of the path.
     /// This method assumes points are rotated toward North (Y-)
-    fn find_next_waypoint(path: &mut Vec<Vector<i8>>, pos_from: Point2<f32>, pos_to: Point2<f32>, rect_to: &Rectangle, inv: Rotation2<f32>, iteration: i8, path_extension: (u8, u8), rng: &mut ChaCha8Rng) -> Option<bool> {
+    fn find_next_waypoint(path: &mut Vec<Vector<i8>>, pos_from: Point2<f32>, pos_to: Point2<f32>, rect_from: &Rectangle, rect_to: &Rectangle, inv: Rotation2<f32>, iteration: i8, path_extension: (u8, u8), rng: &mut ChaCha8Rng) -> Option<bool> {
         if iteration > 10 {
             return None;
         }
@@ -78,28 +80,27 @@ impl Connection {
 
         if delta <= 0f32 {
             pos_next.y -= rng.gen_range(path_extension.0..path_extension.1) as f32;
+            pos_next.y = if pos_next.y.round() as i32 % 2 == 0 { pos_next.y } else { pos_next.y + 1f32 };
         }
         else if iteration > 0
         {
             pos_next.y -= delta;
-            let world_to = inv * Point2::new(pos_next.x, pos_next.y + 1f32);
+            pos_next.y = if pos_next.y.round() as i32 % 2 == 0 { pos_next.y } else { pos_next.y + 1f32 };
 
-            if rect_to.is_inside(Vector { x: world_to.x.round() as i8, y: world_to.y.round() as i8 }) {
+            if Connection::intersects(pos_next, pos_from, rect_to, rect_from, inv) {
                 return Some(false);
-            }
-            else if relative_eq!(pos_next, pos_to) {
+            } else if relative_eq!(Point2::new(pos_next.x.round(), pos_next.y.round()), Point2::new(pos_to.x.round(), pos_to.y.round())) {
                 return Some(true);
             }
         }
 
-        let rot_delta = pos_from.x - pos_to.x;
-        let next_rot = if relative_eq!(rot_delta, 0f32) {
-            let r = rng.gen_range(0..1);
-            if r == 0 {
+        let rot_delta = (pos_from.x - pos_to.x).round();
+        let next_rot = if relative_eq!(rot_delta.round(), 0f32) {
+            if rng.gen_range(0..1) == 0 {
                 Rotation2::new(-std::f32::consts::FRAC_PI_2)
             }
             else {
-                Rotation2::new(-std::f32::consts::FRAC_PI_2)
+                Rotation2::new(std::f32::consts::FRAC_PI_2)
             }
         }
         else if rot_delta < 0f32 {
@@ -111,19 +112,16 @@ impl Connection {
         let mut retry = 0;
 
         loop {
-            match Connection::find_next_waypoint(path, next_rot * pos_next, next_rot * pos_to, rect_to, inv * next_rot.inverse(), iteration + 1, path_extension, rng) {
+            match Connection::find_next_waypoint(path, next_rot * pos_next, next_rot * pos_to, rect_from, rect_to, inv * next_rot.inverse(), iteration + 1, path_extension, rng) {
                 Some(true) => {
                     let world_point = inv * pos_next;
-                    let mut pos = Vector { x: world_point.x.round() as i8, y: world_point.y.round() as i8 };
-                    // align the point to even cells on grid, it works because
-                    // the same transform is applied to all points in the path
-                    pos.x = if pos.x % 2 == 0 { pos.x } else { pos.x - 1 };
-                    pos.y = if pos.y % 2 == 0 { pos.y } else { pos.y - 1 };
+                    let pos = Vector { x: world_point.x.round() as i8, y: world_point.y.round() as i8 };
                     path.push(pos);
                     break;
                 },
                 Some(false) => {
                     pos_next.y -= rng.gen_range(path_extension.0..path_extension.1) as f32;
+                    pos_next.y = if pos_next.y.round() as i32 % 2 == 0 { pos_next.y } else { pos_next.y + 1f32 };
                 }
                 _ => {
                     return None;
@@ -138,6 +136,28 @@ impl Connection {
         }
 
         Some(true)
+    }
+
+    fn intersects(pos_to: Point2<f32>, pos_from: Point2<f32>, rect_to: &Rectangle, rect_from: &Rectangle, inv: Rotation2<f32>) -> bool {
+        // TODO - replace with a mathematical approach
+        // see: https://stackoverflow.com/questions/99353/how-to-test-if-a-line-segment-intersects-an-axis-aligned-rectange-in-2d
+        let mut intersect = false;
+        let from = cmp::min(pos_from.y.round() as i8, pos_to.y.round() as i8) + 1;
+        let to = cmp::max(pos_from.y.round() as i8, pos_to.y.round() as i8) - 1;
+
+        for y in from..to {
+            let world_pos = inv * Point2::new(pos_from.x, y as f32);
+            let v = Vector { x: world_pos.x.round() as i8, y: world_pos.y.round() as i8 };
+
+            intersect = rect_to.is_inside(v.clone()) || rect_from.is_inside(v);
+
+            if intersect
+            {
+                break;
+            }
+        }
+
+        intersect
     }
 
     /// Create an exit on one wall of a room, the exit cannot face the other room.
