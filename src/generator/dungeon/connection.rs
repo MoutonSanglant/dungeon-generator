@@ -32,8 +32,8 @@ impl Connection {
 
     pub fn make_path(&mut self, rng: &mut ChaCha8Rng, path_extension: (u8, u8)) {
         if self.path.waypoints.len() <= 0 {
-            let (from_pos, from_dir) = Connection::create_room_exit(rng, &self.from, &self.to).unwrap();
-            let (to_pos, _to_dir) = Connection::create_room_exit(rng, &self.to, &self.from).unwrap();
+            let (from_pos, from_dir) = Connection::create_room_exit(rng, &self.from, &self.to, path_extension).unwrap();
+            let (to_pos, _to_dir) = Connection::create_room_exit(rng, &self.to, &self.from, path_extension).unwrap();
 
             let mut path = Connection::find_path(
                 from_pos.clone(),
@@ -141,10 +141,10 @@ impl Connection {
 
     /// Create an exit on one wall of a room, the exit cannot face the other room.
     /// The exit will always be on a wall, on an even tile of the grid and cannot be a corner
-    fn create_room_exit(rng: &mut ChaCha8Rng, room: &Weak<RefCell<Room>>, other_room: &Weak<RefCell<Room>>) -> Option<(Vector<i8>, Direction)> {
+    fn create_room_exit(rng: &mut ChaCha8Rng, room: &Weak<RefCell<Room>>, other_room: &Weak<RefCell<Room>>, path_extension: (u8, u8)) -> Option<(Vector<i8>, Direction)> {
         let rect = room.upgrade().unwrap().borrow().rect.clone();
         let other_rect = other_room.upgrade().unwrap().borrow().rect.clone();
-        let mut coords = Vector {
+        let coords = Vector {
             x: rng.gen_range((rect.p1.x + 1)..(rect.p2.x - 2)),
             y: rng.gen_range((rect.p1.y + 1)..(rect.p2.y - 2)),
         };
@@ -176,11 +176,12 @@ impl Connection {
             position.x = if position.x % 2 == 0 { position.x } else { position.x - 1 };
             position.y = if position.y % 2 == 0 { position.y } else { position.y - 1 };
 
+            let limit = (path_extension.1 + 1) as i8;
             let test_point = match direction {
-                Direction::North => Vector { x: position.x, y: position.y - 2 },
-                Direction::South => Vector { x: position.x, y: position.y + 2 },
-                Direction::East => Vector { x: position.x + 2, y: position.y },
-                Direction::West => Vector { x: position.x - 2, y: position.y },
+                Direction::North => Vector { x: position.x, y: position.y - limit },
+                Direction::South => Vector { x: position.x, y: position.y + limit },
+                Direction::East => Vector { x: position.x + limit, y: position.y },
+                Direction::West => Vector { x: position.x - limit, y: position.y },
             };
 
             if !other_rect.is_inside(test_point) {
