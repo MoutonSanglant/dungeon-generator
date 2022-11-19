@@ -28,7 +28,7 @@ report a bug or want to suggest a PR, please do so! I will look into it.
 
 The algorithm is quite naive but does its job, with some limitation. The output
 of the generation is either a byte-array or a string with identifiers for floor,
-doors, and walls.
+doors, corridors, and walls.
 
 ### Rules
 
@@ -51,9 +51,13 @@ doors, and walls.
 
 ### Notes
 
-The algorithm is far from being perfect, but have some advantages: it never
-fails, so the computation time is quite easy to determine, and it's quite fast
-even with a lot of rooms, thanks to the path-solving which is only checking
+The algorithm is far from being perfect, one of its most noticable issue is that
+rooms can be overlap corridors. It may or may not be an issue consider the usage
+you will do with the generated dungeon.
+
+That being said, it have some advantages too: it never fails, so the computation
+time is quite easy to determine, it have a low memory footprint and it's quite
+fast even with a lot of rooms, thanks to the path-solving which is only checking
 1-to-1 connections.
 
 Of course, on average modern hardware, there is almost no gain and many other,
