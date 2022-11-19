@@ -60,7 +60,7 @@ fn main() -> ExitCode {
                                args.min,
                                args.max,
                                (args.spacing[0], args.spacing[1]),
-                               (args.spacing[0], args.spacing[1]),
+                               (args.extension[0], args.extension[1]),
                             );
 
     if let Err(e) = config {
