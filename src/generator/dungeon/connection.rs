@@ -1,7 +1,7 @@
 extern crate nalgebra as na;
 extern crate approx;
 
-use crate::generator::math::{Rectangle, Vector};
+use crate::generator::math::{Rectangle, Vector, intersects};
 use super::room::Room;
 use super::path::Path;
 use std::rc::{Weak, Rc};
@@ -87,7 +87,14 @@ impl Connection {
             pos_next.y -= delta;
             pos_next.y = if pos_next.y.round() as i32 % 2 == 0 { pos_next.y } else { pos_next.y + 1f32 };
 
-            if Connection::intersects(pos_next, pos_from, rect_to, rect_from, inv) {
+            // offset values to avoid collision with a room when the from or
+            // to positions are within the room (entrance & exit)
+            let from = cmp::min(pos_from.y.round() as i8, pos_to.y.round() as i8) + 1;
+            let to = cmp::max(pos_from.y.round() as i8, pos_to.y.round() as i8) - 1;
+            let p1 = inv * Point2::new(pos_from.x, from as f32);
+            let p2 = inv * Point2::new(pos_from.x, to as f32);
+
+            if intersects(p1, p2, rect_to, rect_from) {
                 return Some(false);
             } else if relative_eq!(Point2::new(pos_next.x.round(), pos_next.y.round()), Point2::new(pos_to.x.round(), pos_to.y.round())) {
                 return Some(true);
@@ -136,28 +143,6 @@ impl Connection {
         }
 
         Some(true)
-    }
-
-    fn intersects(pos_to: Point2<f32>, pos_from: Point2<f32>, rect_to: &Rectangle, rect_from: &Rectangle, inv: Rotation2<f32>) -> bool {
-        // TODO - replace with a mathematical approach
-        // see: https://stackoverflow.com/questions/99353/how-to-test-if-a-line-segment-intersects-an-axis-aligned-rectange-in-2d
-        let mut intersect = false;
-        let from = cmp::min(pos_from.y.round() as i8, pos_to.y.round() as i8) + 1;
-        let to = cmp::max(pos_from.y.round() as i8, pos_to.y.round() as i8) - 1;
-
-        for y in from..to {
-            let world_pos = inv * Point2::new(pos_from.x, y as f32);
-            let v = Vector { x: world_pos.x.round() as i8, y: world_pos.y.round() as i8 };
-
-            intersect = rect_to.is_inside(v.clone()) || rect_from.is_inside(v);
-
-            if intersect
-            {
-                break;
-            }
-        }
-
-        intersect
     }
 
     /// Create an exit on one wall of a room, the exit cannot face the other room.
